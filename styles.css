@@ -1,0 +1,115 @@
+    body {
+      background-color: #070e1d;
+      color: #f9fafb;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 2px;
+      color: #fff;
+    // text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 18px;
+      }
+    }
+
+    .form-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .form-container input[type="text"] {
+      flex: 1;
+      height: 26px;
+      font-size: 14px;
+      margin-bottom: 2px;
+      background-color: #01014f;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 24px;
+      color: #fff;
+    }
+
+    .form-container .orange-button {
+      flex-shrink: 0;
+      background-color: #f89430;
+      color: #ffffff;
+      border: none;
+      padding: 12px 16px;
+      margin-left: 3px;
+      margin-bottom: 2px;
+      cursor: pointer;
+      font-size: 18px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .form-container .orange-button:hover {
+      background-color: #e97d1d;
+    }
+
+    .form-container .orange-button.clicked {
+      transform: scale(1.1);
+      background-color: #ffae42;
+    }
+
+    table {
+      border: 3px solid #26292c;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 15px;
+      margin-top: 1px;
+      width: 100%;
+    }
+
+    th {
+      background-color: #101d39;
+      color: #f9fafb;
+      font-size: 18px;
+      padding: 5px;
+    }
+
+    td {
+      padding: 6px;
+      vertical-align: middle;
+    }
+
+    td:first-child {
+      max-width: 40%;
+      word-break: break-all;
+      padding: 0px;
+      font-size: 14px;
+    }
+
+    td:nth-child(2) a {
+      color: #6e8ebe;
+      text-decoration: none;
+      transition: color 0.3s;
+      padding: 0px;
+      font-size: 16px;
+    }
+
+    td:nth-child(2) a:hover {
+      color: #4d74a8;
+    }
+
+    tr:not(:last-child) {
+      border-bottom: 1px solid #26292c;
+    }
+
+    .delete-logo {
+      width: 18px;
+      height: 23px;
+      cursor: pointer;
+    }
+
+    .red-text {
+      color: red;
+    }
