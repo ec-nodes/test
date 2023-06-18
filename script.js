@@ -18,21 +18,48 @@
 
     function addNodeToTable(nodeName, nodeAddress, transactionTime) {
       const table = document.getElementById('myTable');
+
+      const addresses = Array.from(table.querySelectorAll('td:nth-child(2) a'));
+      const existingAddress = addresses.find(address => address.textContent === nodeAddress);
+      if (existingAddress) {
+        return;
+      }
+
       const newRow = table.insertRow();
       const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
       newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTime}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
       const deleteLogo = newRow.querySelector('.delete-logo');
-deleteLogo.addEventListener('click', () => {
-  const confirmation = confirm("Please confirm this action!");
-  if (confirmation) {
-    table.deleteRow(newRow.rowIndex);
-    deleteNodeFromStorage(nodeAddress);
-  }
-});
+      deleteLogo.addEventListener('click', () => {
+        const confirmation = confirm("Please confirm this action!");
+        if (confirmation) {
+          table.deleteRow(newRow.rowIndex);
+          deleteNodeFromStorage(nodeAddress);
+        }
+      });
       if (transactionTime !== 'Last Hour' && transactionTime > 15) {
         newRow.classList.add('red-text');
       }
     }
+
+    const nodeNameInput = document.getElementById('node-name');
+    const nodeAddressInput = document.getElementById('node-address');
+    const addNodeBtn = document.getElementById('add-node');
+
+    nodeNameInput.addEventListener('keyup', (event) => {
+     
+
+ if (event.keyCode === 13) {
+        event.preventDefault();
+        addNodeBtn.click();
+      }
+    });
+
+    nodeAddressInput.addEventListener('keyup', (event) => {
+      if (event.keyCode === 13) {
+        event.preventDefault();
+        addNodeBtn.click();
+      }
+    });
 
     function deleteNodeFromStorage(nodeAddress) {
       const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
@@ -41,6 +68,11 @@ deleteLogo.addEventListener('click', () => {
     }
 
     function addNodeToDatabase(nodeName, nodeAddress) {
+      if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+        alert('Please complete both fields!');
+        return;
+      }
+
       const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
       const newNode = { nodeName, nodeAddress };
       nodes.push(newNode);
@@ -50,35 +82,54 @@ deleteLogo.addEventListener('click', () => {
     document.addEventListener('DOMContentLoaded', async () => {
       const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
       const table = document.getElementById('myTable');
+      const existingAddresses = new Set();
+
+      const addresses = Array.from(table.querySelectorAll('td:nth-child(2) a'));
+      addresses.forEach(address => {
+        existingAddresses.add(address.textContent);
+      });
+
       const nodeDataArray = await Promise.all(storedNodes.map(fetchTransactions));
       nodeDataArray
         .filter(Boolean)
         .forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
           const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
           addNodeToTable(nodeName, nodeAddress, lastTransactionTime || 'Last Hour');
+          existingAddresses.add(nodeAddress);
         });
       table.style.display = 'table';
+
+      const addNodeBtn = document.getElementById('add-node');
+
+      addNodeBtn.addEventListener('click', async () => {
+        const nodeName = document.getElementById('node-name').value;
+        const nodeAddress = document.getElementById('node-address').value;
+
+        if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+          alert('Please complete both fields!');
+          return;
+        }
+
+        if (existingAddresses.has(nodeAddress)) {
+          alert('This address already exists!');
+          return;
+        }
+
+        addNodeBtn.classList.add('clicked');
+        setTimeout(() => {
+          addNodeBtn.classList.remove('clicked');
+        }, 120);
+
+        const nodeData = await fetchTransactions({ nodeName, nodeAddress });
+        if (nodeData) {
+          addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
+          addNodeToDatabase(nodeName, nodeAddress);
+          document.getElementById('node-name').value = '';
+          document.getElementById('node-address').value = '';
+          existingAddresses.add(nodeAddress);
+        }
+      });
     });
-
-    const addNodeBtn = document.getElementById('add-node');
-
-addNodeBtn.addEventListener('click', async () => {
-  const nodeName = document.getElementById('node-name').value;
-  const nodeAddress = document.getElementById('node-address').value;
-
-  addNodeBtn.classList.add('clicked');
-  setTimeout(() => {
-    addNodeBtn.classList.remove('clicked');
-  }, 140);
-
-  const nodeData = await fetchTransactions({ nodeName, nodeAddress });
-  if (nodeData) {
-    addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
-    addNodeToDatabase(nodeName, nodeAddress);
-    document.getElementById('node-name').value = '';
-    document.getElementById('node-address').value = '';
-  }
-});
 
     window.addEventListener('resize', () => {
       const addresses = document.querySelectorAll('td:nth-child(2) a');
