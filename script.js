@@ -1,4 +1,4 @@
-async function fetchTransactions(node) {
+ async function fetchTransactions(node) {
   try {
     const response = await fetch(
       `https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`
@@ -145,3 +145,22 @@ window.addEventListener("resize", () => {
     address.textContent = generateNewNodeAddressText(address.textContent);
   });
 });
+
+if (Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+function showNotification(nodeName) {
+  if (Notification.permission === "granted") {
+    if (!("Notification" in window)) {
+      console.log("Acest browser nu suportă notificări.");
+      return;
+    }
+
+    const options = {
+      body: `Nodul ${nodeName} nu a avut contract call în ultimele 15 ore!`,
+    };
+
+    const notification = new Notification("Alertă nod", options);
+  }
+}
