@@ -18,7 +18,6 @@ function generateNewNodeAddressText(nodeAddress) {
 
 function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   const table = document.getElementById('myTable');
-
   const newRow = table.insertRow();
   const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
   newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTime}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
@@ -32,7 +31,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   });
   if (transactionTime !== 'Last Hour' && transactionTime > 15) {
     newRow.classList.add('red-text');
-    showNotification(nodeName); // Afiseaza notificarea pentru nodurile cu contract call de peste 15 ore
   }
 }
 
@@ -70,21 +68,6 @@ function addNodeToDatabase(nodeName, nodeAddress) {
   const newNode = { nodeName, nodeAddress };
   nodes.push(newNode);
   localStorage.setItem('nodes', JSON.stringify(nodes));
-}
-
-function showNotification(nodeName) {
-  if (Notification.permission === "granted") {
-    if (!("Notification" in window)) {
-      console.log("Acest browser nu suportă notificări.");
-      return;
-    }
-
-    const options = {
-      body: `Nodul ${nodeName} nu a avut contract call în ultimele 15 ore!`,
-    };
-
-    const notification = new Notification("Alertă nod", options);
-  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -137,10 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       existingAddresses.add(nodeAddress);
     }
   });
-
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
 });
 
 window.addEventListener('resize', () => {
@@ -149,3 +128,68 @@ window.addEventListener('resize', () => {
     address.textContent = generateNewNodeAddressText(address.textContent);
   });
 });
+
+// Function to save the nodes as a custom-formatted backup file
+function downloadBackup() {
+  const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+  let backupContent = '';
+  nodes.forEach((node) => {
+    backupContent += `{NodeName: ${JSON.stringify(node.nodeName)}, NodeAddress: ${JSON.stringify(node.nodeAddress)}},\n`;
+  });
+
+  const blob = new Blob([backupContent], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'nodes_backup.txt'; // Save as .txt to avoid automatic formatting as JSON
+  link.click();
+}
+
+// Function to save the nodes as JSON backup file
+function downloadBackupJSON() {
+  const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+  const backupData = JSON.stringify(nodes, null, 2);
+  const blob = new Blob([backupData], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'nodes_backup.json';
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
+// Function to restore the nodes from a JSON backup file
+function restoreBackup() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const contents = e.target.result;
+      try {
+        const nodes = JSON.parse(contents);
+        if (Array.isArray(nodes)) {
+          localStorage.setItem('nodes', JSON.stringify(nodes));
+          location.reload();
+        } else {
+          throw new Error('Invalid backup file format.');
+        }
+      } catch (error) {
+        console.log('Error parsing backup file:', error);
+        alert('Error parsing backup file. Please make sure the file is in the correct format.');
+      }
+    };
+    reader.readAsText(file);
+  });
+  input.click();
+}
+
+const downloadBackupBtn = document.getElementById('download-backup');
+downloadBackupBtn.addEventListener('click', downloadBackupJSON);
+
+const restoreBackupBtn = document.getElementById('restore-backup');
+restoreBackupBtn.addEventListener('click', restoreBackup);
