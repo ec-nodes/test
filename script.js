@@ -21,7 +21,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   const newRow = table.insertRow();
   const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
   
-  const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime}h` : transactionTime;
+  const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
   
   newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
   const deleteLogo = newRow.querySelector('.delete-logo');
@@ -32,7 +32,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
       deleteNodeFromStorage(nodeAddress);
     }
   });
-  if (typeof transactionTime === 'number' && transactionTime > 15) {
+  if (typeof transactionTime === 'number' && transactionTime > 14) {
     newRow.classList.add('red-text');
   }
 }
