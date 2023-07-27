@@ -1,12 +1,18 @@
 async function fetchTransactions(node) {
   try {
-    const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
-    const json = await response.json();
-    const nodeTransactionsArray = json.result;
-    if (nodeTransactionsArray.length > 0) {
-      const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
-      return { ...node, lastTransactionTime };
-    }
+    const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${address}`);
+                const data = await response.json();
+                if (data.result && data.result.length > 0) {
+                    const lastTransaction = data.result[0];
+                    const lastCallTimestamp = lastTransaction.timeStamp * 1000;
+                    const currentTime = Date.now();
+                    const timeDifference = currentTime - lastCallTimestamp;
+                    const hoursDifference = Math.floor(timeDifference / (1000 * 60 * 60));
+                    const minutesDifference = Math.floor(timeDifference / (1000 * 60));
+                    return hoursDifference > 0 ? `${hoursDifference} h` : `${minutesDifference} min`;
+                } else {
+                    return "N/A";
+                }
   } catch (error) {
     console.log(error);
   }
