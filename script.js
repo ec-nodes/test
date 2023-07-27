@@ -44,6 +44,20 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   }
 }
 
+nodeDataArray
+  .filter((transactionTime) => typeof transactionTime === 'number')
+  .forEach((transactionTime, index) => {
+    const { nodeName, nodeAddress } = storedNodes[index];
+    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+    addNodeToTable(nodeName, nodeAddress, transactionTime || 'Last Hour');
+    existingAddresses.add(nodeAddress);
+    if (transactionTime > 14) {
+      const tableRows = table.getElementsByTagName('tr');
+      tableRows[tableRows.length - 1].classList.add('red-text');
+    }
+  });
+
+
 const nodeNameInput = document.getElementById('node-name');
 const nodeAddressInput = document.getElementById('node-address');
 const addNodeBtn = document.getElementById('add-node');
