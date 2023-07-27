@@ -1,21 +1,14 @@
-async function fetchTransactions(nodeAddress) {
+async function fetchTransactions(node) {
   try {
-    const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${nodeAddress}`);
-    const data = await response.json();
-    if (data.result && data.result.length > 0) {
-      const lastTransaction = data.result[0];
-      const lastCallTimestamp = lastTransaction.timeStamp * 1000;
-      const currentTime = Date.now();
-      const timeDifference = currentTime - lastCallTimestamp;
-      const hoursDifference = Math.floor(timeDifference / (1000 * 60 * 60));
-      const minutesDifference = Math.floor(timeDifference / (1000 * 60));
-      return hoursDifference > 0 ? `${hoursDifference} h` : `${minutesDifference} min`;
-    } else {
-      return "N/A";
+    const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
+    const json = await response.json();
+    const nodeTransactionsArray = json.result;
+    if (nodeTransactionsArray.length > 0) {
+      const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 60); // Convert to minutes
+      return { ...node, lastTransactionTime };
     }
   } catch (error) {
     console.log(error);
-    return; // Add this line to return undefined on error.
   }
 }
 
@@ -43,20 +36,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     newRow.classList.add('red-text');
   }
 }
-
-nodeDataArray
-  .filter((transactionTime) => typeof transactionTime === 'number')
-  .forEach((transactionTime, index) => {
-    const { nodeName, nodeAddress } = storedNodes[index];
-    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-    addNodeToTable(nodeName, nodeAddress, transactionTime || 'Last Hour');
-    existingAddresses.add(nodeAddress);
-    if (transactionTime > 14) {
-      const tableRows = table.getElementsByTagName('tr');
-      tableRows[tableRows.length - 1].classList.add('red-text');
-    }
-  });
-
 
 const nodeNameInput = document.getElementById('node-name');
 const nodeAddressInput = document.getElementById('node-address');
@@ -104,13 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     existingAddresses.add(address.textContent);
   });
 
-  const nodeDataArray = await Promise.all(storedNodes.map(nodeAddress => fetchTransactions(nodeAddress.nodeAddress)));
+  const nodeDataArray = await Promise.all(storedNodes.map(fetchTransactions));
   nodeDataArray
     .filter(Boolean)
-    .forEach((transactionTime, index) => {
-      const { nodeName, nodeAddress } = storedNodes[index];
+    .forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
       const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-      addNodeToTable(nodeName, nodeAddress, transactionTime || 'Last Hour');
+      addNodeToTable(nodeName, nodeAddress, lastTransactionTime || 'Last Hour');
       existingAddresses.add(nodeAddress);
     });
   table.style.display = 'table';
