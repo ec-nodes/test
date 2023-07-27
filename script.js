@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     .filter(Boolean)
     .forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
       const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-      addNodeToTable(nodeName, nodeAddress, lastTransactionTime || 'Last Hour'); 
+      addNodeToTable(nodeName, nodeAddress, lastTransactionTime || 'Last Hour');
       existingAddresses.add(nodeAddress);
     });
   table.style.display = 'table';
