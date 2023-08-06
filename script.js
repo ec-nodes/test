@@ -1,21 +1,15 @@
-async function fetchLastTransactionTime(address) {
-  try {
-    const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${address}`);
-    const data = await response.json();
-    if (data.result && data.result.length > 0) {
-      const lastTransaction = data.result[0];
-      const lastCallTimestamp = lastTransaction.timeStamp * 1000;
-      const currentTime = Date.now();
-      const timeDifference = currentTime - lastCallTimestamp;
-      const hoursDifference = Math.floor(timeDifference / (1000 * 60 * 60));
-      const minutesDifference = Math.floor(timeDifference / (1000 * 60));
-      return hoursDifference > 0 ? `${hoursDifference} h` : `${minutesDifference} min`;
-    } else {
-      return "N/A";
+async function fetchAllTransactions(storedNodes) {
+  const nodeDataArray = await Promise.all(storedNodes.map(fetchTransactions));
+  return nodeDataArray.filter(Boolean);
+} fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
+    const json = await response.json();
+    const nodeTransactionsArray = json.result;
+    if (nodeTransactionsArray.length > 0) {
+      const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
+      return { ...node, lastTransactionTime };
     }
   } catch (error) {
-    console.error("Error fetching transaction data", error);
-    return "Error";
+    console.log(error);
   }
 }
 
@@ -27,9 +21,9 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   const table = document.getElementById('myTable');
   const newRow = table.insertRow();
   const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-
+  
   const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
-
+  
   newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
   const deleteLogo = newRow.querySelector('.delete-logo');
   deleteLogo.addEventListener('click', () => {
@@ -90,15 +84,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     existingAddresses.add(address.textContent);
   });
 
-  const nodeDataArray = await Promise.all(storedNodes.map(fetchLastTransactionTime));
-  nodeDataArray
-    .filter(Boolean)
-    .forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
+  try {
+    const nodeDataArray = await fetchAllTransactions(storedNodes);
+
+    nodeDataArray.forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
       const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
       addNodeToTable(nodeName, nodeAddress, lastTransactionTime || 'Last Hour');
       existingAddresses.add(nodeAddress);
     });
-  table.style.display = 'table';
+
+    table.style.display = 'table';
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 
   const addNodeBtn = document.getElementById('add-node');
 
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       addNodeBtn.classList.remove('clicked');
     }, 120);
 
-    const nodeData = await fetchLastTransactionTime(nodeAddress);
+    const nodeData = await fetchTransactions({ nodeName, nodeAddress });
     if (nodeData) {
       addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
       addNodeToDatabase(nodeName, nodeAddress);
