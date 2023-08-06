@@ -100,7 +100,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadNodesData(); // Load nodes data when the page is loaded
 
   const addNodeBtn = document.getElementById('add-node');
-
   addNodeBtn.addEventListener('click', async () => {
     const nodeName = document.getElementById('node-name').value;
     const nodeAddress = document.getElementById('node-address').value;
