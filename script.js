@@ -1,7 +1,6 @@
-async function fetchAllTransactions(storedNodes) {
-  const nodeDataArray = await Promise.all(storedNodes.map(fetchTransactions));
-  return nodeDataArray.filter(Boolean);
-} fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
+async function fetchTransactions(node) {
+  try {
+    const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
     const json = await response.json();
     const nodeTransactionsArray = json.result;
     if (nodeTransactionsArray.length > 0) {
@@ -21,9 +20,9 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   const table = document.getElementById('myTable');
   const newRow = table.insertRow();
   const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-  
+
   const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
-  
+
   newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
   const deleteLogo = newRow.querySelector('.delete-logo');
   deleteLogo.addEventListener('click', () => {
@@ -74,31 +73,31 @@ function addNodeToDatabase(nodeName, nodeAddress) {
   localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+const existingAddresses = new Set();
+
+async function loadNodesData() {
   const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
   const table = document.getElementById('myTable');
-  const existingAddresses = new Set();
 
   const addresses = Array.from(table.querySelectorAll('td:nth-child(2) a'));
   addresses.forEach(address => {
     existingAddresses.add(address.textContent);
   });
 
-  try {
-    const nodeDataArray = await fetchAllTransactions(storedNodes);
-
-    nodeDataArray.forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
+  const nodeDataArray = await Promise.all(storedNodes.map(fetchTransactions));
+  nodeDataArray
+    .filter(Boolean)
+    .forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
       const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
       addNodeToTable(nodeName, nodeAddress, lastTransactionTime || 'Last Hour');
       existingAddresses.add(nodeAddress);
     });
 
-    table.style.display = 'table';
-  } catch (error) {
-    console.log(error);
-  }
-});
+  table.style.display = 'table';
+}
 
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadNodesData(); // Load nodes data when the page is loaded
 
   const addNodeBtn = document.getElementById('add-node');
 
