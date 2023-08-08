@@ -39,8 +39,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   }
 }
 
-// ...
-
 document.addEventListener('DOMContentLoaded', async () => {
   await loadNodesData(); // Load nodes data when the page is loaded
 
@@ -53,14 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Please complete both fields!');
       return;
     }
-
-    // ...
-  });
-});
-
-// ...
-
-
 
 const nodeNameInput = document.getElementById('node-name');
 const nodeAddressInput = document.getElementById('node-address');
@@ -86,7 +76,7 @@ function deleteNodeFromStorage(nodeAddress) {
   localStorage.setItem('nodes', JSON.stringify(updatedNodes));
 }
 
-function addNodeToDatabase(nodeName, nodeAddress) {
+function addNodeToDatabase(nodeName, nodess) {
   if (nodeName.trim() === '' || nodeAddress.trim() === '') {
     alert('Please complete both fields!');
     return;
