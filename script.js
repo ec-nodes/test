@@ -16,8 +16,6 @@ function generateNewNodeAddressText(nodeAddress) {
   return window.innerWidth < window.innerHeight ? `${nodeAddress.substr(0, 5)}. . .${nodeAddress.substr(-4)}` : nodeAddress;
 }
 
-// ...
-
 function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   const table = document.getElementById('myTable');
   const newRow = table.insertRow();
@@ -34,23 +32,10 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
       deleteNodeFromStorage(nodeAddress);
     }
   });
-  if (typeof transactionTime === 'number' && transactionTime > 1) {
+  if (typeof transactionTime === 'number' && transactionTime > 14) {
     newRow.classList.add('red-text');
   }
 }
-
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadNodesData(); // Load nodes data when the page is loaded
-
-  const addNodeBtn = document.getElementById('add-node');
-  addNodeBtn.addEventListener('click', async () => {
-    const nodeName = document.getElementById('node-name').value;
-    const nodeAddress = document.getElementById('node-address').value;
-
-    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
-      alert('Please complete both fields!');
-      return;
-    }
 
 const nodeNameInput = document.getElementById('node-name');
 const nodeAddressInput = document.getElementById('node-address');
@@ -76,7 +61,7 @@ function deleteNodeFromStorage(nodeAddress) {
   localStorage.setItem('nodes', JSON.stringify(updatedNodes));
 }
 
-function addNodeToDatabase(nodeName, nodess) {
+function addNodeToDatabase(nodeName, nodeAddress) {
   if (nodeName.trim() === '' || nodeAddress.trim() === '') {
     alert('Please complete both fields!');
     return;
@@ -110,6 +95,19 @@ async function loadNodesData() {
 
   table.style.display = 'table';
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadNodesData(); // Load nodes data when the page is loaded
+
+  const addNodeBtn = document.getElementById('add-node');
+  addNodeBtn.addEventListener('click', async () => {
+    const nodeName = document.getElementById('node-name').value;
+    const nodeAddress = document.getElementById('node-address').value;
+
+    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+      alert('Please complete both fields!');
+      return;
+    }
 
     if (existingAddresses.has(nodeAddress)) {
       alert('This address already exists!');
