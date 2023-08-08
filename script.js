@@ -21,7 +21,17 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   const newRow = table.insertRow();
   const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
 
-  const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
+  let transactionTimeText = '';
+  if (typeof transactionTime === 'number') {
+    if (transactionTime < 1) {
+      const minutes = Math.round(transactionTime * 60);
+      transactionTimeText = `${minutes} min`;
+    } else {
+      transactionTimeText = `${transactionTime} h`;
+    }
+  } else {
+    transactionTimeText = transactionTime;
+  }
 
   newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
   const deleteLogo = newRow.querySelector('.delete-logo');
@@ -34,14 +44,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   });
   if (typeof transactionTime === 'number' && transactionTime > 14) {
     newRow.classList.add('red-text');
-
-    
-  }                    const hoursDifference = Math.floor(timeDifference / (1000 * 60 * 60));
-                    const minutesDifference = Math.floor(timeDifference / (1000 * 60));
-                    return hoursDifference > 0 ? `${hoursDifference} h` : `${minutesDifference} min`;
-                } else {
-                    return "N/A";
-                }
+  }
 }
 
 const nodeNameInput = document.getElementById('node-name');
