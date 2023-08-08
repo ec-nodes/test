@@ -42,10 +42,11 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
       deleteNodeFromStorage(nodeAddress);
     }
   });
-  if (typeof transactionTime === 'number' && transactionTime > 14) {
+  if (typeof transactionTime === 'number' && transactionTime < 1) {
     newRow.classList.add('red-text');
   }
 }
+
 
 const nodeNameInput = document.getElementById('node-name');
 const nodeAddressInput = document.getElementById('node-address');
