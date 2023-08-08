@@ -16,22 +16,14 @@ function generateNewNodeAddressText(nodeAddress) {
   return window.innerWidth < window.innerHeight ? `${nodeAddress.substr(0, 5)}. . .${nodeAddress.substr(-4)}` : nodeAddress;
 }
 
+// ...
+
 function addNodeToTable(nodeName, nodeAddress, transactionTime) {
   const table = document.getElementById('myTable');
   const newRow = table.insertRow();
   const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
 
-  let transactionTimeText;
-
-  if (typeof transactionTime === 'number') {
-    if (transactionTime < 1) {
-      transactionTimeText = `${Math.round(transactionTime * 60)} m`;
-    } else {
-      transactionTimeText = `${transactionTime} h`;
-    }
-  } else {
-    transactionTimeText = transactionTime;
-  }
+  const transactionTimeText = typeof transactionTime === 'number' ? (transactionTime < 1 ? `${Math.round(transactionTime * 60)}m` : `${transactionTime}h`) : transactionTime;
 
   newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
   const deleteLogo = newRow.querySelector('.delete-logo');
@@ -42,10 +34,32 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
       deleteNodeFromStorage(nodeAddress);
     }
   });
-  if (typeof transactionTime === 'number' && transactionTime < 1) {
+  if (typeof transactionTime === 'number' && transactionTime > 1) {
     newRow.classList.add('red-text');
   }
 }
+
+// ...
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadNodesData(); // Load nodes data when the page is loaded
+
+  const addNodeBtn = document.getElementById('add-node');
+  addNodeBtn.addEventListener('click', async () => {
+    const nodeName = document.getElementById('node-name').value;
+    const nodeAddress = document.getElementById('node-address').value;
+
+    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+      alert('Please complete both fields!');
+      return;
+    }
+
+    // ...
+  });
+});
+
+// ...
+
 
 
 const nodeNameInput = document.getElementById('node-name');
@@ -106,19 +120,6 @@ async function loadNodesData() {
 
   table.style.display = 'table';
 }
-
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadNodesData(); // Load nodes data when the page is loaded
-
-  const addNodeBtn = document.getElementById('add-node');
-  addNodeBtn.addEventListener('click', async () => {
-    const nodeName = document.getElementById('node-name').value;
-    const nodeAddress = document.getElementById('node-address').value;
-
-    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
-      alert('Please complete both fields!');
-      return;
-    }
 
     if (existingAddresses.has(nodeAddress)) {
       alert('This address already exists!');
