@@ -4,7 +4,7 @@ async function fetchTransactions(node) {
     const json = await response.json();
     const nodeTransactionsArray = json.result;
     if (nodeTransactionsArray.length > 0) {
-      const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
+      const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 60); // Calculate time in minutes
       return { ...node, lastTransactionTime };
     }
   } catch (error) {
