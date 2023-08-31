@@ -1,0 +1,96 @@
+import paramiko
+import concurrent.futures
+import re
+from datetime import datetime
+import os
+
+ssh_port = 22
+combined_command = "journalctl -u etny-vagrant -n 1500 && systemctl status etny-vagrant"
+
+def calculate_time_elapsed(start_time, end_time):
+    start = datetime.strptime(start_time, "%b %d %H:%M:%S")
+    end = datetime.strptime(end_time, "%b %d %H:%M:%S")
+    elapsed = end - start
+
+    hours, remainder = divmod(elapsed.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    elapsed_time = f"{hours:02}h, {minutes:02}min ago"
+    return elapsed_time
+
+def check_journal(ip, username, password):
+    try:
+        ssh_client = paramiko.SSHClient()
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh_client.connect(ip, port=ssh_port, username=username, password=password)
+
+        stdin, stdout, stderr = ssh_client.exec_command(combined_command)
+        output = stdout.read().decode()
+
+        ssh_client.close()
+
+        success_found = False
+        active_status = None
+        failed_status = False
+
+        for line in output.splitlines():
+            if "DP request created successfully!" in line:
+                success_found = True
+                timestamp_match = re.search(r'^(\w+\s+\d+\s\d+:\d+:\d+)', line)
+                if timestamp_match:
+                    timestamp = timestamp_match.group(1)
+                    elapsed_time = calculate_time_elapsed(timestamp, datetime.now().strftime("%b %d %H:%M:%S"))
+                    status = f"{ip}: {elapsed_time}"
+            if "Active:" in line:
+                active_status_match = re.search(r'Active:\s+(.*?)$', line)
+                if active_status_match:
+                    active_status = active_status_match.group(1).strip()
+            if "failed" in line:
+                failed_status = True
+
+        if success_found:
+            status = f"{ip}: {elapsed_time}"
+            if failed_status:
+                status += " - Failed"
+            elif active_status and "active" in active_status:
+                status += " - Active"
+            return status
+
+    except paramiko.AuthenticationException:
+        return f"{ip}: Auth Failed"
+    except paramiko.SSHException as e:
+        return f"{ip}: SSH Error"
+    except Exception as e:
+        return f"{ip}: Error"
+
+def main():
+    data_file = os.path.expanduser("~/data")
+
+    with open(data_file, "r") as file:
+        data_lines = file.readlines()
+        data = [line.strip().split() for line in data_lines]
+
+    results = []
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = list(executor.map(lambda x: check_journal(x[0], x[1], x[2]), data))
+
+    max_ip_length = max(len(result.split(":")[0]) for result in results)
+    max_time_length = max(len(result.split(":")[1].split("-")[0].strip()) for result in results)
+    max_status_length = max(len(result.split("-")[-1].strip()) for result in results)
+
+    separator_line = f"{'─' * (max_ip_length + 3)}{'─' * (max_time_length + 3)}{'─' * (max_status_length + 3)}"
+
+    print(separator_line)
+    print(f"{'Node IP':^{max_ip_length + 2}} {'Last Call':^{max_time_length + 3}} {'Status':^{max_status_length + 2}}")
+    print(separator_line)
+
+    for result in results:
+        if result is not None:
+            ip, time_status = result.split(": ")
+            time, status = time_status.split(" - ")
+            print(f"{ip:<{max_ip_length + 3}} {time:<{max_time_length + 3}} {status:<{max_status_length + 3}}")
+            print(separator_line)
+
+if __name__ == "__main__":
+    main()
