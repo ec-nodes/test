@@ -42,7 +42,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
       deleteNodeFromStorage(nodeAddress);
     }
   });
-  if (typeof transactionTime === 'number' && transactionTime > 24) {
+  if (typeof transactionTime === 'number' && transactionTime > 19) {
     newRow.classList.add('red-text');
   }
 }
@@ -107,7 +107,7 @@ async function loadNodesData() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadNodesData(); // Load nodes data when the page is loaded
+  await loadNodesData();
 
   const addNodeBtn = document.getElementById('add-node');
   addNodeBtn.addEventListener('click', async () => {
