@@ -1,4 +1,4 @@
-function fetchTransactions(node) {
+async function fetchTransactions(node) {
   try {
     const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
     const json = await response.json();
@@ -96,9 +96,7 @@ async function loadNodesData() {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
         const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
-        setTimeout(() => {
-          cell.textContent = response.lastTransactionTime || 'Last Hour';
-        }, 1000);
+
         if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
           row.classList.add('red-text');
         }
