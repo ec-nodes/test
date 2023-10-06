@@ -1,5 +1,6 @@
 const spinner = '/|\\-';
 let spinnerIndex = 0;
+let spinnerInterval;
 
 async function fetchTransactions(node) {
   try {
@@ -86,20 +87,23 @@ async function loadNodesData() {
 
   table.style.display = 'table';
 
-  storedNodes.forEach(({ nodeName, nodeAddress }) => {
-    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-    addNodeToTable(nodeName, nodeAddress, spinner[spinnerIndex % spinner.length]);
-    existingAddresses.add(nodeAddress);
+  spinnerInterval = setInterval(() => {
+    storedNodes.forEach(({ nodeName, nodeAddress }, index) => {
+      const row = table.querySelector(`tr:nth-child(${index + 1}) td:nth-child(3)`);
+      row.textContent = spinner[spinnerIndex % spinner.length];
+    });
     spinnerIndex++;
-  });
+  }, 400);
 
-  await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
+  await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }, index) => {
     try {
       const response = await fetchTransactions({ nodeName, nodeAddress });
       if (response) {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-        const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
+        const row = table.querySelector(`tr:nth-child(${index + 1}) td:nth-child(3)`);
         const cell = row.cells[2];
+
+        clearInterval(spinnerInterval);
 
         if (typeof response.lastTransactionTime === 'number') {
           cell.textContent = `${response.lastTransactionTime} h`;
