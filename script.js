@@ -115,7 +115,7 @@ async function loadNodesData() {
         setTimeout(() => {
           cell.textContent = response.lastTransactionTime || 'Last Hour';
           stopProgressAnimation(progressInterval);
-        }, 2000);
+        }, 1000);
 
         if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
           row.classList.add('red-text');
