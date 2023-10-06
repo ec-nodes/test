@@ -1,3 +1,6 @@
+const spinner = '/|\\-';
+let spinnerIndex = 0;
+
 async function fetchTransactions(node) {
   try {
     const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
@@ -23,7 +26,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
   const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-  newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td><div class="star-animation"></div></td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+  newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
   const deleteLogo = newRow.querySelector('.delete-logo');
   deleteLogo.addEventListener('click', () => {
     const confirmation = confirm("Please confirm this action!");
@@ -85,8 +88,9 @@ async function loadNodesData() {
 
   storedNodes.forEach(({ nodeName, nodeAddress }) => {
     const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-    addNodeToTable(nodeName, nodeAddress, '. . .');
+    addNodeToTable(nodeName, nodeAddress, spinner[spinnerIndex % spinner.length]);
     existingAddresses.add(nodeAddress);
+    spinnerIndex++;
   });
 
   await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
