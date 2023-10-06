@@ -1,18 +1,4 @@
-function startProgressAnimation(cell) {
-  let progress = 1;
-  const progressText = [".", " ", ". .", " ", ". . ."];
-  const progressInterval = setInterval(() => {
-    cell.textContent = progressText[progress % 4];
-    progress++;
-  }, 400);
-  return progressInterval;
-}
-
-function stopProgressAnimation(progressInterval) {
-  clearInterval(progressInterval);
-}
-
-async function fetchTransactions(node) {
+function fetchTransactions(node) {
   try {
     const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
     const json = await response.json();
@@ -110,13 +96,9 @@ async function loadNodesData() {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
         const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
-        const progressInterval = startProgressAnimation(cell);
-
         setTimeout(() => {
           cell.textContent = response.lastTransactionTime || 'Last Hour';
-          stopProgressAnimation(progressInterval);
         }, 1000);
-
         if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
           row.classList.add('red-text');
         }
