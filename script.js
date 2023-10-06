@@ -97,7 +97,7 @@ async function loadNodesData() {
 
   table.style.display = 'table';
 
-  await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
+  for (const { nodeName, nodeAddress } of storedNodes) {
     try {
       const response = await fetchTransactions({ nodeName, nodeAddress });
       if (response) {
@@ -105,7 +105,7 @@ async function loadNodesData() {
         const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
         
-        // Pornirea animației înainte de așteptarea a 2 secunde
+        // Pornirea animației imediat la deschiderea paginii
         const progressInterval = startProgressAnimation(cell);
 
         setTimeout(async () => {
@@ -122,7 +122,7 @@ async function loadNodesData() {
     } catch (error) {
       console.error(`Error fetching data for ${nodeAddress}: ${error}`);
     }
-  }));
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
