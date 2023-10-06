@@ -115,11 +115,11 @@ async function loadNodesData() {
         setTimeout(() => {
           cell.textContent = response.lastTransactionTime || 'Last Hour';
           stopProgressAnimation(progressInterval);
-        }, 0); // Am schimbat timeout-ul la 0 pentru a începe instantaneu
+        }, 1);
         if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
           row.classList.add('red-text');
         }
-        // Aici adăugați datele în tabel după ce animația se oprește
+        
         addNodeToTable(nodeName, nodeAddress, response.lastTransactionTime || 'Last Hour');
         existingAddresses.add(nodeAddress);
       }
