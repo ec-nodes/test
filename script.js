@@ -97,8 +97,13 @@ async function loadNodesData() {
         const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
 
-        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-          row.classList.add('red-text');
+        if (typeof response.lastTransactionTime === 'number') {
+          cell.textContent = `${response.lastTransactionTime} h`;
+          if (response.lastTransactionTime > 24) {
+            row.classList.add('red-text');
+          }
+        } else {
+          cell.textContent = 'Last Hour';
         }
       }
     } catch (error) {
@@ -132,7 +137,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const nodeData = await fetchTransactions({ nodeName, nodeAddress });
     if (nodeData) {
-      addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
+      const table = document.getElementById('myTable');
+      const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+      const transactionTime = nodeData.lastTransactionTime ? `${nodeData.lastTransactionTime} h` : 'Last Hour';
+      addNodeToTable(nodeName, nodeAddress, transactionTime);
       addNodeToDatabase(nodeName, nodeAddress);
       document.getElementById('node-name').value = '';
       document.getElementById('node-address').value = '';
