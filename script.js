@@ -1,6 +1,6 @@
 function startProgressAnimation(cell) {
   let progress = 1;
-  const progressText = [".", "..", "..."];
+  const progressText = [".", " ", "..", " ", "..."];
   const progressInterval = setInterval(() => {
     cell.textContent = progressText[progress % 4];
     progress++;
@@ -99,7 +99,7 @@ async function loadNodesData() {
 
   storedNodes.forEach(({ nodeName, nodeAddress }) => {
     const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-    addNodeToTable(nodeName, nodeAddress, '....');
+    addNodeToTable(nodeName, nodeAddress, '. . . .');
     existingAddresses.add(nodeAddress);
   });
 
@@ -115,7 +115,7 @@ async function loadNodesData() {
         setTimeout(() => {
           cell.textContent = response.lastTransactionTime || 'Last Hour';
           stopProgressAnimation(progressInterval);
-        }, 2000);
+        }, 200);
 
         if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
           row.classList.add('red-text');
