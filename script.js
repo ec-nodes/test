@@ -1,6 +1,16 @@
-const spinner = '/|\\-';
-let spinnerIndex = 0;
-let spinnerInterval;
+function startProgressAnimation(cell) {
+  let progress = 1;
+  const progressText = [".", "..", "..."];
+  const progressInterval = setInterval(() => {
+    cell.textContent = progressText[progress % 4];
+    progress++;
+  }, 400);
+  return progressInterval;
+}
+
+function stopProgressAnimation(progressInterval) {
+  clearInterval(progressInterval);
+}
 
 async function fetchTransactions(node) {
   try {
@@ -87,31 +97,28 @@ async function loadNodesData() {
 
   table.style.display = 'table';
 
-  spinnerInterval = setInterval(() => {
-    storedNodes.forEach(({ nodeName, nodeAddress }, index) => {
-      const row = table.querySelector(`tr:nth-child(${index + 1}) td:nth-child(3)`);
-      row.textContent = spinner[spinnerIndex % spinner.length];
-    });
-    spinnerIndex++;
-  }, 400);
+  storedNodes.forEach(({ nodeName, nodeAddress }) => {
+    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+    addNodeToTable(nodeName, nodeAddress, '....');
+    existingAddresses.add(nodeAddress);
+  });
 
-  await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }, index) => {
+  await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
     try {
       const response = await fetchTransactions({ nodeName, nodeAddress });
       if (response) {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-        const row = table.querySelector(`tr:nth-child(${index + 1}) td:nth-child(3)`);
+        const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
+        const progressInterval = startProgressAnimation(cell);
 
-        clearInterval(spinnerInterval);
+        setTimeout(() => {
+          cell.textContent = response.lastTransactionTime || 'Last Hour';
+          stopProgressAnimation(progressInterval);
+        }, 2000);
 
-        if (typeof response.lastTransactionTime === 'number') {
-          cell.textContent = `${response.lastTransactionTime} h`;
-          if (response.lastTransactionTime > 24) {
-            row.classList.add('red-text');
-          }
-        } else {
-          cell.textContent = 'Last Hour';
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+          row.classList.add('red-text');
         }
       }
     } catch (error) {
@@ -145,10 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const nodeData = await fetchTransactions({ nodeName, nodeAddress });
     if (nodeData) {
-      const table = document.getElementById('myTable');
-      const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-      const transactionTime = nodeData.lastTransactionTime ? `${nodeData.lastTransactionTime} h` : 'Last Hour';
-      addNodeToTable(nodeName, nodeAddress, transactionTime);
+      addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
       addNodeToDatabase(nodeName, nodeAddress);
       document.getElementById('node-name').value = '';
       document.getElementById('node-address').value = '';
