@@ -110,18 +110,16 @@ async function loadNodesData() {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
         const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
+        addNodeToTable(nodeName, nodeAddress, response.lastTransactionTime || 'Last Hour'); // Adăugați datele în tabel înainte de animație
         const progressInterval = startProgressAnimation(cell);
 
         setTimeout(() => {
-          cell.textContent = response.lastTransactionTime || 'Last Hour';
           stopProgressAnimation(progressInterval);
-        }, 1);
+        }, 0); // Opriți animația după ce datele au fost adăugate în tabel
+
         if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
           row.classList.add('red-text');
         }
-        
-        addNodeToTable(nodeName, nodeAddress, response.lastTransactionTime || 'Last Hour');
-        existingAddresses.add(nodeAddress);
       }
     } catch (error) {
       console.error(`Error fetching data for ${nodeAddress}: ${error}`);
