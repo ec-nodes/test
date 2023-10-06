@@ -147,3 +147,14 @@
         max-width: 100%;
       }
     }
+
+/* Adăugați acest CSS pentru animația stelutei */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-star::before {
+  content: '\2605';
+  animation: spin 1s linear infinite;
+}
