@@ -104,7 +104,9 @@ async function loadNodesData() {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
         const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
-        const progressInterval = startProgressAnimation(cell); // Aici începe animația
+        
+        // Pornirea animației înainte de așteptarea a 2 secunde
+        const progressInterval = startProgressAnimation(cell);
 
         setTimeout(async () => {
           cell.textContent = response.lastTransactionTime || 'Last Hour';
