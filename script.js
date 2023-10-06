@@ -1,6 +1,6 @@
 function startProgressAnimation(cell) {
   let progress = 1;
-  const progressText = [".", " ", ".."];
+  const progressText = [".", " ", ". .", " ", ". . ."];
   const progressInterval = setInterval(() => {
     cell.textContent = progressText[progress % 4];
     progress++;
