@@ -97,6 +97,12 @@ async function loadNodesData() {
 
   table.style.display = 'table';
 
+  storedNodes.forEach(({ nodeName, nodeAddress }) => {
+    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+    addNodeToTable(nodeName, nodeAddress, '....');
+    existingAddresses.add(nodeAddress);
+  });
+
   await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
     try {
       const response = await fetchTransactions({ nodeName, nodeAddress });
@@ -104,18 +110,18 @@ async function loadNodesData() {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
         const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
         const cell = row.cells[2];
-        const progressInterval = startProgressAnimation(cell); // Aici începe animația
+        const progressInterval = startProgressAnimation(cell);
 
-        setTimeout(async () => {
+        setTimeout(() => {
           cell.textContent = response.lastTransactionTime || 'Last Hour';
           stopProgressAnimation(progressInterval);
-          if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
-            row.classList.add('red-text');
-          }
-          // Aici adăugați datele în tabel după ce animația se oprește
-          addNodeToTable(nodeName, nodeAddress, response.lastTransactionTime || 'Last Hour');
-          existingAddresses.add(nodeAddress);
         }, 0); // Am schimbat timeout-ul la 0 pentru a începe instantaneu
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+          row.classList.add('red-text');
+        }
+        // Aici adăugați datele în tabel după ce animația se oprește
+        addNodeToTable(nodeName, nodeAddress, response.lastTransactionTime || 'Last Hour');
+        existingAddresses.add(nodeAddress);
       }
     } catch (error) {
       console.error(`Error fetching data for ${nodeAddress}: ${error}`);
