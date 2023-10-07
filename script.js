@@ -115,7 +115,7 @@ updateCellWithTransactionTime();
 
             storedNodes.forEach(({ nodeName, nodeAddress }) => {
                 const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-                addNodeToTable(nodeName, nodeAddress, '....');
+                addNodeToTable(nodeName, nodeAddress, '.');
                 existingAddresses.add(nodeAddress);
             });
 
