@@ -4,7 +4,7 @@ function startProgressAnimation(cell) {
             const progressInterval = setInterval(() => {
                 cell.textContent = progressText[progress % 4];
                 progress++;
-            }, 400);
+            }, 300);
             return progressInterval;
         }
 
