@@ -1,39 +1,25 @@
+function startProgressAnimation(cell) {
+  let progress = 1;
+  const progressText = [".", "..", "..."];
+  const progressInterval = setInterval(() => {
+    cell.textContent = progressText[progress % 4];
+    progress++;
+  }, 400);
+  return progressInterval;
+}
+
+function stopProgressAnimation(progressInterval) {
+  clearInterval(progressInterval);
+}
+
 async function fetchTransactions(node) {
   try {
     const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
     const json = await response.json();
     const nodeTransactionsArray = json.result;
-
-    const loadingCell = document.createElement('td'); // Creăm o celulă pentru încărcare
-    loadingCell.innerHTML = 'Loading...'; // Adăugăm textul de încărcare
-    loadingCell.classList.add('loading-animation'); // Adăugăm o clasă pentru animație
-
-    const table = document.getElementById('myTable');
-    const newRow = table.insertRow();
-    const newNodeAddressText = generateNewNodeAddressText(node.nodeAddress);
-
-    newRow.innerHTML = `<td>${node.nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${node.nodeAddress}">${newNodeAddressText}</a></td>`;
-    newRow.appendChild(loadingCell); // Adăugăm celula de încărcare în rând
-
-    const deleteCell = document.createElement('td');
-    deleteCell.innerHTML = `<img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo">`;
-    newRow.appendChild(deleteCell);
-
-    const deleteLogo = newRow.querySelector('.delete-logo');
-    deleteLogo.addEventListener('click', () => {
-      const confirmation = confirm("Please confirm this action!");
-      if (confirmation) {
-        table.deleteRow(newRow.rowIndex);
-        deleteNodeFromStorage(node.nodeAddress);
-      }
-    });
-
     if (nodeTransactionsArray.length > 0) {
       const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
-      loadingCell.textContent = `${lastTransactionTime} h`; // Actualizăm celula de încărcare cu rezultatul
-      if (lastTransactionTime > 14) {
-        newRow.classList.add('red-text');
-      }
+      return { ...node, lastTransactionTime };
     }
   } catch (error) {
     console.log(error);
@@ -45,24 +31,31 @@ function generateNewNodeAddressText(nodeAddress) {
 }
 
 function addNodeToTable(nodeName, nodeAddress, transactionTime) {
-  const table = document.getElementById('myTable');
-  const newRow = table.insertRow();
-  const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+    const table = document.getElementById('myTable');
+    const newRow = table.insertRow();
+    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
 
-  const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
+    const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-  newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
-  const deleteLogo = newRow.querySelector('.delete-logo');
-  deleteLogo.addEventListener('click', () => {
-    const confirmation = confirm("Please confirm this action!");
-    if (confirmation) {
-      table.deleteRow(newRow.rowIndex);
-      deleteNodeFromStorage(nodeAddress);
+    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    const deleteLogo = newRow.querySelector('.delete-logo');
+    deleteLogo.addEventListener('click', () => {
+        const confirmation = confirm("Please confirm this action!");
+        if (confirmation) {
+            table.deleteRow(newRow.rowIndex);
+            deleteNodeFromStorage(nodeAddress);
+        }
+    });
+    if (typeof transactionTime === 'number' && transactionTime > 17) {
+        newRow.classList.add('red-text');
     }
-  });
-  if (typeof transactionTime === 'number' && transactionTime > 14) {
-    newRow.classList.add('red-text');
-  }
+
+    const cell = newRow.cells[2];
+    const progressInterval = startProgressAnimation(cell);
+
+    setTimeout(() => {
+        stopProgressAnimation(progressInterval);
+    }, 1000);
 }
 
 const nodeNameInput = document.getElementById('node-name');
@@ -107,25 +100,42 @@ async function loadNodesData() {
   const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
   const table = document.getElementById('myTable');
 
-  const addresses = Array.from(table.querySelectorAll('td:nth-child(2) a'));
-  addresses.forEach(address => {
-    existingAddresses.add(address.textContent);
-  });
-
-  const nodeDataArray = await Promise.all(storedNodes.map(fetchTransactions));
-  nodeDataArray
-    .filter(Boolean)
-    .forEach(({ nodeName, nodeAddress, lastTransactionTime }) => {
-      const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-      addNodeToTable(nodeName, nodeAddress, lastTransactionTime || 'Last Hour');
-      existingAddresses.add(nodeAddress);
-    });
+  existingAddresses.clear();
 
   table.style.display = 'table';
+
+  storedNodes.forEach(({ nodeName, nodeAddress }) => {
+    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+    addNodeToTable(nodeName, nodeAddress, '....');
+    existingAddresses.add(nodeAddress);
+  });
+
+  await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
+    try {
+      const response = await fetchTransactions({ nodeName, nodeAddress });
+      if (response) {
+        const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+        const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
+        const cell = row.cells[2];
+        const progressInterval = startProgressAnimation(cell);
+
+        setTimeout(() => {
+          cell.textContent = response.lastTransactionTime || 'Last Hour';
+          stopProgressAnimation(progressInterval);
+        }, 2000);
+
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+          row.classList.add('red-text');
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching data for ${nodeAddress}: ${error}`);
+    }
+  }));
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadNodesData(); // Load nodes data when the page is loaded
+  await loadNodesData();
 
   const addNodeBtn = document.getElementById('add-node');
   addNodeBtn.addEventListener('click', async () => {
