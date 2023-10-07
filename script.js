@@ -46,7 +46,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
             deleteNodeFromStorage(nodeAddress);
         }
     });
-    if (typeof transactionTime === 'number' && transactionTime > 17) {
+    if (typeof transactionTime === 'number' && transactionTime > 24) {
         newRow.classList.add('red-text');
     }
 
@@ -57,7 +57,7 @@ async function updateCellWithTransactionTime() {
     if (response) {
         cell.textContent = response.lastTransactionTime || 'Last Hour';
         stopProgressAnimation(progressInterval);
-        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
             newRow.classList.add('red-text');
         }
     }
