@@ -1,6 +1,6 @@
 function startProgressAnimation(cell) {
   let progress = 1;
-  const progressText = [".", "..", "..."];
+  const progressText = [".", " ", ". .", " ", ". . ."];
   const progressInterval = setInterval(() => {
     cell.textContent = progressText[progress % 4];
     progress++;
@@ -50,12 +50,21 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         newRow.classList.add('red-text');
     }
 
-    const cell = newRow.cells[2];
-    const progressInterval = startProgressAnimation(cell);
+const cell = newRow.cells[2];
 
-    setTimeout(() => {
+async function updateCellWithTransactionTime() {
+    const response = await fetchTransactions({ nodeName, nodeAddress });
+    if (response) {
+        cell.textContent = response.lastTransactionTime || 'Last Hour';
         stopProgressAnimation(progressInterval);
-    }, 1000);
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+            newRow.classList.add('red-text');
+        }
+    }
+}
+
+const progressInterval = startProgressAnimation(cell);
+updateCellWithTransactionTime();
 }
 
 const nodeNameInput = document.getElementById('node-name');
@@ -106,7 +115,7 @@ async function loadNodesData() {
 
   storedNodes.forEach(({ nodeName, nodeAddress }) => {
     const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-    addNodeToTable(nodeName, nodeAddress, '....');
+    addNodeToTable(nodeName, nodeAddress, ' ');
     existingAddresses.add(nodeAddress);
   });
 
