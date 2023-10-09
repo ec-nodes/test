@@ -14,10 +14,6 @@ function stopProgressAnimation(progressInterval) {
 
 async function fetchTransactions(node) {
     try {
-        if (refreshedAddresses.has(node.nodeAddress)) {
-            return null;
-        }
-
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
@@ -53,16 +49,35 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const cell = newRow.cells[2];
 
-  async function updateCellWithTransactionTime() {
-    if (refreshedAddresses.has(nodeAddress)) {
-        return;
-    }
-
+async function updateCellWithTransactionTime() {
     const response = await fetchTransactions({ nodeName, nodeAddress });
 
     if (!response) {
-        cell.textContent = 'No Response';
-        stopProgressAnimation(progressInterval);
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
+        if (retryResponse) {
+            cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
+            stopProgressAnimation(progressInterval);
+            if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
+                newRow.classList.add('red-text');
+            }
+        } else {
+            cell.textContent = 'Retrying';
+            stopProgressAnimation(progressInterval);
+
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
+            if (secondRetryResponse) {
+                cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
+                stopProgressAnimation(progressInterval);
+                if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                    newRow.classList.add('red-text');
+                }
+            } else {
+                cell.textContent = 'Bloxberg Fail';
+                stopProgressAnimation(progressInterval);
+            }
+        }
     } else {
         cell.textContent = response.lastTransactionTime || 'Last Hour';
         stopProgressAnimation(progressInterval);
@@ -70,9 +85,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
             newRow.classList.add('red-text');
         }
     }
-
-    refreshedAddresses.add(nodeAddress);
-  }
+}
 
     const progressInterval = startProgressAnimation(cell);
     updateCellWithTransactionTime();
