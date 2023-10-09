@@ -1,6 +1,3 @@
-const existingAddresses = new Set();
-const refreshedAddresses = new Set();
-
 function startProgressAnimation(cell) {
     let progress = 1;
     const progressText = [".", "..", "..."];
@@ -21,13 +18,13 @@ async function fetchTransactions(node) {
             return null; // Return null for addresses that have already been refreshed
         }
 
+async function fetchTransactions(node) {
+    try {
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
-
         if (nodeTransactionsArray.length > 0) {
             const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
-            refreshedAddresses.add(node.nodeAddress);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
@@ -63,10 +60,10 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         return; // Dacă adresa a fost deja actualizată, ieșiți din funcție
     }
 
-    const response = await fetchTransactions({ nodeName, nodeAddress });
+ fetchTransactions({ nodeName, nodeAddress });
 
     if (!response) {
-        await new Promise((resolve) => setTimeout(resolve, 10000)); // Așteptați mai mult timp pentru retragerea cererii
+        await new Promise((resolve) => setTimeout(resolve, 4000));
         const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
         if (retryResponse) {
             cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
@@ -75,7 +72,21 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 newRow.classList.add('red-text');
             }
         } else {
+            cell.textContent = 'Retrying';
             stopProgressAnimation(progressInterval);
+
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
+            if (secondRetryResponse) {
+                cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
+                stopProgressAnimation(progressInterval);
+                if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                    newRow.classList.add('red-text');
+                }
+            } else {
+                cell.textContent = 'Bloxberg Fail';
+                stopProgressAnimation(progressInterval);
+            }
         }
     } else {
         cell.textContent = response.lastTransactionTime || 'Last Hour';
@@ -84,8 +95,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
             newRow.classList.add('red-text');
         }
     }
-
-    refreshedAddresses.add(nodeAddress); // Adăugați adresa la refreshedAddresses chiar și dacă a fost o eroare
 }
 
     const progressInterval = startProgressAnimation(cell);
@@ -128,13 +137,13 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
-// Pentru încărcarea inițială și adăugarea adreseleor la refreshedAddresses
+const existingAddresses = new Set();
+
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const table = document.getElementById('myTable');
 
     existingAddresses.clear();
-    refreshedAddresses.clear(); // Clear refreshedAddresses pentru a reimprospăta doar adresele noi
 
     table.style.display = 'table';
 
@@ -142,7 +151,6 @@ async function loadNodesData() {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
         addNodeToTable(nodeName, nodeAddress, '.');
         existingAddresses.add(nodeAddress);
-        refreshedAddresses.add(nodeAddress); // Adăugați adresele existente la refreshedAddresses
     });
 
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
@@ -199,7 +207,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('node-name').value = '';
             document.getElementById('node-address').value = '';
             existingAddresses.add(nodeAddress);
-            refreshedAddresses.add(nodeAddress); // Adăugați adresa nouă la refreshedAddresses
         }
     });
 });
