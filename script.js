@@ -18,7 +18,7 @@ function stopProgressAnimation(progressInterval) {
 async function fetchTransactions(node) {
     try {
         if (refreshedAddresses.has(node.nodeAddress)) {
-            return null;
+            return null; // Return null for addresses that have already been refreshed
         }
         
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
@@ -136,11 +136,13 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
+// Pentru încărcarea inițială și adăugarea adreseleor la refreshedAddresses
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const table = document.getElementById('myTable');
 
     existingAddresses.clear();
+    refreshedAddresses.clear(); // Clear refreshedAddresses pentru a reimprospăta doar adresele noi
 
     table.style.display = 'table';
 
@@ -148,6 +150,7 @@ async function loadNodesData() {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
         addNodeToTable(nodeName, nodeAddress, '.');
         existingAddresses.add(nodeAddress);
+        refreshedAddresses.add(nodeAddress); // Adăugați adresele existente la refreshedAddresses
     });
 
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
@@ -204,6 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('node-name').value = '';
             document.getElementById('node-address').value = '';
             existingAddresses.add(nodeAddress);
+            refreshedAddresses.add(nodeAddress); // Adăugați adresa nouă la refreshedAddresses
         }
     });
 });
