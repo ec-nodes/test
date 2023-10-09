@@ -171,10 +171,14 @@ async function loadNodesData() {
                     row.classList.add('red-text');
                 }
             }
-        } catch (error) {
+        } 
+        
+        catch (error) {
             console.error(`Error fetching data for ${nodeAddress}: ${error}`);
         }
     }));
+}
+        refreshedAddresses.add(nodeAddress); // Adăugați adresa la refreshedAddresses chiar și dacă a fost o eroare
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
