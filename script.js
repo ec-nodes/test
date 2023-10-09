@@ -53,35 +53,26 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const cell = newRow.cells[2];
 
-    async function updateCellWithTransactionTime() {
-        if (refreshedAddresses.has(nodeAddress)) {
-            return;
-        }
-
-        const response = await fetchTransactions({ nodeName, nodeAddress });
-
-        if (!response) {
-            await new Promise((resolve) => setTimeout(resolve, 10000));
-            const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-            if (retryResponse) {
-                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
-                stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
-                    newRow.classList.add('red-text');
-                }
-            } else {
-                stopProgressAnimation(progressInterval);
-            }
-        } else {
-            cell.textContent = response.lastTransactionTime || 'Last Hour';
-            stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-                newRow.classList.add('red-text');
-            }
-        }
-
-        refreshedAddresses.add(nodeAddress);
+  async function updateCellWithTransactionTime() {
+    if (refreshedAddresses.has(nodeAddress)) {
+        return;
     }
+
+    const response = await fetchTransactions({ nodeName, nodeAddress });
+
+    if (!response) {
+        cell.textContent = 'No Response';
+        stopProgressAnimation(progressInterval);
+    } else {
+        cell.textContent = response.lastTransactionTime || 'Last Hour';
+        stopProgressAnimation(progressInterval);
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+            newRow.classList.add('red-text');
+        }
+    }
+
+    refreshedAddresses.add(nodeAddress);
+  }
 
     const progressInterval = startProgressAnimation(cell);
     updateCellWithTransactionTime();
