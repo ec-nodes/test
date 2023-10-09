@@ -17,14 +17,14 @@ function stopProgressAnimation(progressInterval) {
 async function fetchTransactions(node) {
     try {
         if (existingAddresses.has(node.nodeAddress)) {
-            return null; // Nu mai face cereri pentru adresele existente
+            return null;
         }
         
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
         if (nodeTransactionsArray.length > 0) {
-            existingAddresses.add(node.nodeAddress); // Marchează adresa ca având răspuns
+            existingAddresses.add(node.nodeAddress);
             const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
