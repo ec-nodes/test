@@ -59,42 +59,34 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const cell = newRow.cells[2];
 
     async function updateCellWithTransactionTime() {
-        const response = await fetchTransactions({ nodeName, nodeAddress });
+    if (refreshedAddresses.has(nodeAddress)) {
+        return; // Dacă adresa a fost deja actualizată, ieșiți din funcție
+    }
 
-        if (!response) {
-            await new Promise((resolve) => setTimeout(resolve, 4000));
-            const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-            if (retryResponse) {
-                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
-                stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
-                    newRow.classList.add('red-text');
-                }
-            } else {
-                cell.textContent = 'Retrying';
-                stopProgressAnimation(progressInterval);
+    const response = await fetchTransactions({ nodeName, nodeAddress });
 
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
-                if (secondRetryResponse) {
-                    cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
-                    stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
-                        newRow.classList.add('red-text');
-                    }
-                } else {
-                    cell.textContent = 'Bloxberg Fail';
-                    stopProgressAnimation(progressInterval);
-                }
-            }
-        } else {
-            cell.textContent = response.lastTransactionTime || 'Last Hour';
+    if (!response) {
+        await new Promise((resolve) => setTimeout(resolve, 10000)); // Așteptați mai mult timp pentru retragerea cererii
+        const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
+        if (retryResponse) {
+            cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+            if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
                 newRow.classList.add('red-text');
             }
+        } else {
+            stopProgressAnimation(progressInterval);
+        }
+    } else {
+        cell.textContent = response.lastTransactionTime || 'Last Hour';
+        stopProgressAnimation(progressInterval);
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+            newRow.classList.add('red-text');
         }
     }
+
+    refreshedAddresses.add(nodeAddress); // Adăugați adresa la refreshedAddresses chiar și dacă a fost o eroare
+}
 
     const progressInterval = startProgressAnimation(cell);
     updateCellWithTransactionTime();
