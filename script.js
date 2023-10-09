@@ -1,3 +1,6 @@
+const existingAddresses = new Set();
+const refreshedAddresses = new Set();
+
 function startProgressAnimation(cell) {
     let progress = 1;
     const progressText = [".", "..", "..."];
@@ -14,11 +17,17 @@ function stopProgressAnimation(progressInterval) {
 
 async function fetchTransactions(node) {
     try {
+        if (refreshedAddresses.has(node.nodeAddress)) {
+            return null;
+        }
+        
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
+        
         if (nodeTransactionsArray.length > 0) {
             const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
+            refreshedAddresses.add(node.nodeAddress);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
@@ -126,8 +135,6 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     nodes.push(newNode);
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
-
-const existingAddresses = new Set();
 
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
