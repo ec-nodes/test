@@ -15,11 +15,9 @@ function stopProgressAnimation(progressInterval) {
 async function fetchTransactions(node) {
     try {
         if (refreshedAddresses.has(node.nodeAddress)) {
-            return null; // Return null for addresses that have already been refreshed
+            return null;
         }
 
-async function fetchTransactions(node) {
-    try {
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
@@ -56,46 +54,34 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const cell = newRow.cells[2];
 
     async function updateCellWithTransactionTime() {
-    if (refreshedAddresses.has(nodeAddress)) {
-        return; // Dacă adresa a fost deja actualizată, ieșiți din funcție
-    }
+        if (refreshedAddresses.has(nodeAddress)) {
+            return;
+        }
 
- fetchTransactions({ nodeName, nodeAddress });
+        const response = await fetchTransactions({ nodeName, nodeAddress });
 
-    if (!response) {
-        await new Promise((resolve) => setTimeout(resolve, 4000));
-        const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-        if (retryResponse) {
-            cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
-            stopProgressAnimation(progressInterval);
-            if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
-                newRow.classList.add('red-text');
-            }
-        } else {
-            cell.textContent = 'Retrying';
-            stopProgressAnimation(progressInterval);
-
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
-            if (secondRetryResponse) {
-                cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
+        if (!response) {
+            await new Promise((resolve) => setTimeout(resolve, 10000));
+            const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
+            if (retryResponse) {
+                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
-                if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
                     newRow.classList.add('red-text');
                 }
             } else {
-                cell.textContent = 'Bloxberg Fail';
                 stopProgressAnimation(progressInterval);
             }
+        } else {
+            cell.textContent = response.lastTransactionTime || 'Last Hour';
+            stopProgressAnimation(progressInterval);
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                newRow.classList.add('red-text');
+            }
         }
-    } else {
-        cell.textContent = response.lastTransactionTime || 'Last Hour';
-        stopProgressAnimation(progressInterval);
-        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-            newRow.classList.add('red-text');
-        }
+
+        refreshedAddresses.add(nodeAddress);
     }
-}
 
     const progressInterval = startProgressAnimation(cell);
     updateCellWithTransactionTime();
@@ -171,14 +157,10 @@ async function loadNodesData() {
                     row.classList.add('red-text');
                 }
             }
-        } 
-        
-        catch (error) {
+        } catch (error) {
             console.error(`Error fetching data for ${nodeAddress}: ${error}`);
         }
     }));
-}
-        refreshedAddresses.add(nodeAddress); // Adăugați adresa la refreshedAddresses chiar și dacă a fost o eroare
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
