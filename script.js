@@ -17,10 +17,6 @@ function stopProgressAnimation(progressInterval) {
 
 async function fetchTransactions(node) {
     try {
-        if (existingAddresses.has(node.nodeAddress)) {
-            return null;
-        }
-
         if (pendingAddresses.has(node.nodeAddress)) {
             return null;
         }
