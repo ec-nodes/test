@@ -27,15 +27,15 @@ async function fetchTransactions(node) {
         const json = await response.json();
         const nodeTransactionsArray = json.result;
         if (nodeTransactionsArray.length > 0) {
-            existingAddresses.add(node.nodeAddress); // Marchează adresa ca având răspuns
-            pendingAddresses.delete(node.nodeAddress); // Elimină adresa din lista de așteptare
+            existingAddresses.add(node.nodeAddress);
+            pendingAddresses.delete(node.nodeAddress);
             const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
         console.log(error);
     } finally {
-        pendingAddresses.delete(node.nodeAddress); // Asigură-te că adresa este eliminată din lista de așteptare în caz de eroare
+        pendingAddresses.delete(node.nodeAddress);
     }
 }
 
@@ -87,7 +87,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                         newRow.classList.add('red-text');
                     }
                 } else {
-                    cell.textContent = 'Bloxberg Fail';
+                    cell.textContent = 'Network Fail';
                     stopProgressAnimation(progressInterval);
                 }
             }
