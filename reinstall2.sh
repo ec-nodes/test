@@ -42,7 +42,7 @@ rm -f /etc/systemd/system/etny-vagrant.service > /dev/null 2>&1
 rm -f /etc/ansible/ansible.cfg > /dev/null 2>&1
 rm -f /etc/ansible/hosts > /dev/null 2>&1
 rm -f /etc/apt/sources.list.d/ansible-ansible-*.list > /dev/null 2>&1
-
+sudo rm -rf /mvp-pox-node > /dev/null 2>&1
 sudo rm -rf /var/lib/libvirt/qemu > /dev/null 2>&1
 sudo rm -rf /var/lib/libvirt/images > /dev/null 2>&1
 sudo rm -rf /etc/libvirt > /dev/null 2>&1
@@ -50,7 +50,6 @@ sudo rm -rf /etc/apparmor.d/libvirt > /dev/null 2>&1
 sudo rm -rf /opt > /dev/null 2>&1
 sudo rm -rf /etc/apt/sources.list.d/ > /dev/null 2>&1
 sudo rm -rf /var/cache/* /var/cache/.[!.] /var/cache/..?* /var/cache/apt/archives/partial > /dev/null 2>&1
-sudo rm -rf /mvp-pox-node > /dev/null 2>&1
 
 echo -e "\nUpdating System ..."
 sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-sgx/ubuntu
@@ -64,7 +63,7 @@ apt-get clean
 echo -e "\nNode Uninstalled & Cleaned successfully! Reinstalling new EC-Node ..."
 
 echo
-sudo -u $SUDO_USER git clone https://github.com/ethernity-cloud/mvp-pox-node.git
+sudo -u $SUDO_USER git clone https://github.com/ethernity-cloud/mvp-pox-node.git "$USER_HOME/mvp-pox-node/"
 
 echo
 echo "Restoring config file ..."
