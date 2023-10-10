@@ -53,9 +53,10 @@ sudo rm -rf /var/cache/* /var/cache/.[!.] /var/cache/..?* /var/cache/apt/archive
 sudo rm -rf /mvp-pox-node > /dev/null 2>&1
 
 echo -e "\nUpdating System ..."
+
 sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-sgx/ubuntu
 sudo add-apt-repository --remove https://apt.releases.hashicorp.com
-sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu
+sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu > /dev/null 2>&1
 
 sudo apt update > /dev/null 2>&1 && sudo apt upgrade -y
 apt-get autoremove -y
