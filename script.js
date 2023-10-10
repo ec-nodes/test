@@ -18,11 +18,11 @@ function stopProgressAnimation(progressInterval) {
 async function fetchTransactions(node) {
     try {
         if (existingAddresses.has(node.nodeAddress)) {
-            return null; // Nu mai face cereri pentru adresele existente
+            return null;
         }
 
         if (pendingAddresses.has(node.nodeAddress)) {
-            return null; // Așteaptă deja un răspuns pentru această adresă
+            return null;
         }
 
         pendingAddresses.add(node.nodeAddress);
