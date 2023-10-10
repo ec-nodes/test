@@ -17,12 +17,8 @@ function stopProgressAnimation(progressInterval) {
 
 async function fetchTransactions(node) {
     try {
-        if (existingAddresses.has(node.nodeAddress)) {
-            return null; // Nu mai face cereri pentru adresele existente
-        }
-
         if (pendingAddresses.has(node.nodeAddress)) {
-            return null; // Așteaptă deja un răspuns pentru această adresă
+            return null;
         }
 
         pendingAddresses.add(node.nodeAddress);
@@ -30,17 +26,16 @@ async function fetchTransactions(node) {
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
-
         if (nodeTransactionsArray.length > 0) {
-            existingAddresses.add(node.nodeAddress); // Marchează adresa ca având răspuns
-            pendingAddresses.delete(node.nodeAddress); // Elimină adresa din lista de așteptare
+            existingAddresses.add(node.nodeAddress);
+            pendingAddresses.delete(node.nodeAddress);
             const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
         console.log(error);
     } finally {
-        pendingAddresses.delete(node.nodeAddress); // Asigură-te că adresa este eliminată din lista de așteptare în caz de eroare
+        pendingAddresses.delete(node.nodeAddress);
     }
 }
 
@@ -76,7 +71,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
                     newRow.classList.add('red-text');
                 }
             } else {
@@ -88,7 +83,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
                         newRow.classList.add('red-text');
                     }
                 } else {
@@ -99,7 +94,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                 newRow.classList.add('red-text');
             }
         }
@@ -145,13 +140,12 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
-const existingAddresses = new Set();
-
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const table = document.getElementById('myTable');
 
     existingAddresses.clear();
+    pendingAddresses.clear();
 
     table.style.display = 'table';
 
@@ -175,7 +169,7 @@ async function loadNodesData() {
                     stopProgressAnimation(progressInterval);
                 }, 2000);
 
-                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                     row.classList.add('red-text');
                 }
             }
