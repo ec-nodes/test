@@ -26,6 +26,7 @@ async function fetchTransactions(node) {
         const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
+
         if (nodeTransactionsArray.length > 0) {
             existingAddresses.add(node.nodeAddress);
             pendingAddresses.delete(node.nodeAddress);
@@ -33,7 +34,7 @@ async function fetchTransactions(node) {
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
-        console.log(error);
+        throw error;
     } finally {
         pendingAddresses.delete(node.nodeAddress);
     }
@@ -149,11 +150,13 @@ async function loadNodesData() {
 
     table.style.display = 'table';
 
-    storedNodes.forEach(({ nodeName, nodeAddress }) => {
+    for (const { nodeName, nodeAddress } of storedNodes) {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-        addNodeToTable(nodeName, nodeAddress, '.');
-        existingAddresses.add(nodeAddress);
-    });
+        if (!existingAddresses.has(nodeAddress)) {
+            addNodeToTable(nodeName, nodeAddress, '.');
+            existingAddresses.add(nodeAddress);
+        }
+    }
 
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
         try {
