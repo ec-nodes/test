@@ -29,7 +29,7 @@ async function fetchTransactions(node) {
         if (nodeTransactionsArray.length > 0) {
             existingAddresses.add(node.nodeAddress);
             pendingAddresses.delete(node.nodeAddress);
-            const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
+            const lastTransactionTime = Math.round((Date.now() / 2000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
@@ -66,24 +66,24 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         const response = await fetchTransactions({ nodeName, nodeAddress });
 
         if (!response) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
                     newRow.classList.add('red-text');
                 }
             } else {
                 cell.textContent = 'Retrying';
                 stopProgressAnimation(progressInterval);
 
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 2000));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
                         newRow.classList.add('red-text');
                     }
                 } else {
@@ -94,7 +94,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
                 newRow.classList.add('red-text');
             }
         }
@@ -169,7 +169,7 @@ async function loadNodesData() {
                     stopProgressAnimation(progressInterval);
                 }, 2000);
 
-                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
                     row.classList.add('red-text');
                 }
             }
