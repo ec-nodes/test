@@ -29,7 +29,7 @@ async function fetchTransactions(node) {
         if (nodeTransactionsArray.length > 0) {
             existingAddresses.add(node.nodeAddress);
             pendingAddresses.delete(node.nodeAddress);
-            const lastTransactionTime = Math.round((Date.now() / 2000 - nodeTransactionsArray[0].timeStamp) / 3600);
+            const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
