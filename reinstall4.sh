@@ -57,13 +57,14 @@ sudo add-apt-repository --remove https://apt.releases.hashicorp.com
 sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu
 
 sudo apt update > /dev/null 2>&1 && sudo apt upgrade -y
+echo -e '\n'
 apt-get autoremove -y
 apt-get clean
 
 echo -e "\nNode Uninstalled & Cleaned successfully! Reinstalling new EC-Node ..."
 
 echo
-sudo -u $SUDO_USER git clone https://github.com/ethernity-cloud/mvp-pox-node.git "$USER_HOME/mvp-pox-node/"
+cd git clone https://github.com/ethernity-cloud/mvp-pox-node.git
 
 echo
 echo "Restoring config file ..."
