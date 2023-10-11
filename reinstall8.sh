@@ -42,7 +42,7 @@ rm -f /etc/systemd/system/etny-vagrant.service > /dev/null 2>&1
 rm -f /etc/ansible/ansible.cfg > /dev/null 2>&1
 rm -f /etc/ansible/hosts > /dev/null 2>&1
 rm -f /etc/apt/sources.list.d/ansible-ansible-*.list > /dev/null 2>&1
-sudo rm -r /mvp-pox-node
+sudo rm -rf mvp-pox-node
 sudo rm -rf /var/lib/libvirt/qemu > /dev/null 2>&1
 sudo rm -rf /var/lib/libvirt/images > /dev/null 2>&1
 sudo rm -rf /etc/libvirt > /dev/null 2>&1
