@@ -29,7 +29,7 @@ async function fetchTransactions(node) {
         if (nodeTransactionsArray.length > 0) {
             existingAddresses.add(node.nodeAddress);
             pendingAddresses.delete(node.nodeAddress);
-            const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 60); // Changed from / 3600 to / 60
+            const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
@@ -48,10 +48,9 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const newRow = table.insertRow();
     const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
 
-    // Modified line to display time in minutes with "min" abbreviation
-    const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} min` : transactionTime;
+    const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td`;
+    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -148,7 +147,7 @@ async function loadNodesData() {
     existingAddresses.clear();
     pendingAddresses.clear();
 
-    table.style display = 'table';
+    table.style.display = 'table';
 
     storedNodes.forEach(({ nodeName, nodeAddress }) => {
         const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
@@ -248,7 +247,7 @@ function restoreBackup() {
                 localStorage.setItem('nodes', JSON.stringify(nodes));
                 location.reload();
             } else {
-                throw an Error('Invalid backup file format.');
+                throw new Error('Invalid backup file format.');
             }
         } catch (error) {
             console.log('Error parsing backup file:', error);
