@@ -51,7 +51,10 @@ sudo rm -rf /etc/apparmor.d/libvirt > /dev/null 2>&1
 sudo rm -rf /opt > /dev/null 2>&1
 sudo rm -rf /etc/apt/sources.list.d/ > /dev/null 2>&1
 sudo rm -rf /var/cache/* /var/cache/.[!.] /var/cache/..?* /var/cache/apt/archives/partial > /dev/null 2>&1
-sudo rm -rf /mvp-pox-node > /dev/null 2>&1
+if [ -d "$USER_HOME/mvp-pox-node" ]; then
+  echo "Directory 'mvp-pox-node' already exists. Deleting it..."
+  rm -rf "$USER_HOME/mvp-pox-node"
+fi > /dev/null 2>&1
 
 echo -e "\nUpdating System ..."
 
