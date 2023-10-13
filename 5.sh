@@ -1,11 +1,11 @@
 GREEN='\e[32m'
 RESET='\e[0m'
 
-while :
+while : # Buclă infinită
 do
-  echo -e "${GREEN}"
-  echo -e "Run this command now or after reboot: cd ~/mvp-pox-node && sudo ./etny-node-installer.sh"
-  echo -e "${RESET}"
+  echo -en "${GREEN}"
+  echo -n "Run this command now or after reboot:"
+  echo -en "${RESET}"
   sleep 1
   clear # Curăță ecranul
   sleep 1
