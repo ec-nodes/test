@@ -58,9 +58,9 @@ fi > /dev/null 2>&1
 
 echo -e "\nUpdating System ..."
 
-sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-sgx/ubuntu
-sudo add-apt-repository --remove https://apt.releases.hashicorp.com
-sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu
+sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-sgx/ubuntu > /dev/null 2>&1
+sudo add-apt-repository --remove https://apt.releases.hashicorp.com > /dev/null 2>&1
+sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu > /dev/null 2>&1
 
 sudo apt update > /dev/null 2>&1 && sudo apt upgrade -y
 echo -e '\n'
