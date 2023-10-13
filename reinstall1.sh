@@ -76,15 +76,15 @@ echo
 echo "Recover config file ..."
 sudo -u $SUDO_USER cp "$USER_HOME/config" "$USER_HOME/mvp-pox-node/"
 
-GREEN='\e[32m'
-RESET='\e[0m'
-
 sec=30
 while [ $sec -ge 0 ]; do
   echo -n "System Rebooting in [CTRL+C to cancel]: $sec seconds" && echo -ne "\033[0K\r" && let "sec=sec-1" && sleep 1
 done
 
 sudo reboot
+
+GREEN='\e[32m'
+RESET='\e[0m'
 
 echo -e "${GREEN}"
 echo -e "Run this command now or after reboot: cd ~/mvp-pox-node && sudo ./etny-node-installer.sh"
