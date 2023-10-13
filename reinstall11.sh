@@ -75,8 +75,6 @@ echo
 echo "Recover config file ..."
 sudo -u $SUDO_USER cp "$USER_HOME/config" "$USER_HOME/mvp-pox-node/"
 
-#!/bin/bash
-
 GREEN='\e[32m'
 RESET='\e[0m'
 
