@@ -62,7 +62,7 @@ sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-s
 sudo add-apt-repository --remove https://apt.releases.hashicorp.com > /dev/null 2>&1
 sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu > /dev/null 2>&1
 
-sudo apt update > /dev/null 2>&1 && sudo apt upgrade -y > /dev/null 2>&1
+sudo apt update && sudo apt upgrade -y > /dev/null 2>&1
 echo -e '\n'
 apt-get autoremove -y
 apt-get clean
@@ -73,15 +73,11 @@ echo
 sudo -u $SUDO_USER git clone https://github.com/ethernity-cloud/mvp-pox-node.git
 
 echo
-echo "Restoring config file ..."
+echo "Recover config file ..."
 sudo -u $SUDO_USER cp "$USER_HOME/config" "$USER_HOME/mvp-pox-node/"
 
 GREEN='\e[32m'
 RESET='\e[0m'
-
-echo -e "${GREEN}"
-echo -e "Run this command now or after reboot: cd ~/mvp-pox-node && sudo ./etny-node-installer.sh"
-echo -e "${RESET}"
 
 sec=30
 while [ $sec -ge 0 ]; do
@@ -89,3 +85,7 @@ while [ $sec -ge 0 ]; do
 done
 
 sudo reboot
+
+echo -e "${GREEN}"
+echo -e "Run this command now or after reboot: cd ~/mvp-pox-node && sudo ./etny-node-installer.sh"
+echo -e "${RESET}"
