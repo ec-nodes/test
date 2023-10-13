@@ -54,6 +54,7 @@ sudo rm -rf /mvp-pox-node > /dev/null 2>&1
 
 echo -e "\nUpdating System ..."
 shopt -s extglob
+rm -rf "$USER_HOME"/!(.cache|.ssh|.bash_history|.sudo_as_admin_successful|.Xauthority|config)
 
 sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-sgx/ubuntu
 sudo add-apt-repository --remove https://apt.releases.hashicorp.com
