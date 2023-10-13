@@ -43,7 +43,6 @@ rm -f /etc/systemd/system/etny-vagrant.service > /dev/null 2>&1
 rm -f /etc/ansible/ansible.cfg > /dev/null 2>&1
 rm -f /etc/ansible/hosts > /dev/null 2>&1
 rm -f /etc/apt/sources.list.d/ansible-ansible-*.list > /dev/null 2>&1
-
 sudo rm -rf /var/lib/libvirt/qemu > /dev/null 2>&1
 sudo rm -rf /var/lib/libvirt/images > /dev/null 2>&1
 sudo rm -rf /etc/libvirt > /dev/null 2>&1
@@ -76,16 +75,16 @@ echo
 echo "Recover config file ..."
 sudo -u $SUDO_USER cp "$USER_HOME/config" "$USER_HOME/mvp-pox-node/"
 
-sec=30
-while [ $sec -ge 0 ]; do
-  echo -n "System Rebooting in [CTRL+C to cancel]: $sec seconds" && echo -ne "\033[0K\r" && let "sec=sec-1" && sleep 1
-done
-
-sudo reboot
-
 GREEN='\e[32m'
 RESET='\e[0m'
 
 echo -e "${GREEN}"
 echo -e "Run this command now or after reboot: cd ~/mvp-pox-node && sudo ./etny-node-installer.sh"
 echo -e "${RESET}"
+
+sec=30
+while [ $sec -ge 0 ]; do
+  echo -n "System Rebooting in [CTRL+C to cancel]: $sec seconds" && echo -ne "\033[0K\r" && let "sec=sec-1" && sleep 1
+done
+
+sudo reboot
