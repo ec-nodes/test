@@ -62,7 +62,7 @@ sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-s
 sudo add-apt-repository --remove https://apt.releases.hashicorp.com > /dev/null 2>&1
 sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu > /dev/null 2>&1
 
-sudo apt update > /dev/null 2>&1 && sudo apt upgrade -y
+sudo apt update > /dev/null 2>&1 && sudo apt upgrade -y > /dev/null 2>&1
 echo -e '\n'
 apt-get autoremove -y
 apt-get clean
