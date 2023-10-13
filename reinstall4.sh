@@ -19,7 +19,7 @@ counter=0
 progress_bar_width=50
 
 while [ $counter -lt $total_programs ]; do
-  percentage=$((counter * 100 / total_programs))
+  percentage=$((counter * 102 / total_programs))
   progress=$((progress_bar_width * counter / total_programs))
   echo -ne "Uninstalling programs: ["
   for ((i = 0; i < progress_bar_width; i++)); do
