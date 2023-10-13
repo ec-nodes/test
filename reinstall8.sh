@@ -11,6 +11,7 @@ sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv > /dev/null 2>&1
 sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv > /dev/null 2>&1
 
 sudo apt-mark unhold "qemu-system-common" "qemu-system-data" "qemu-system-x86" "qemu-utils" 
+
 programs_to_uninstall=("qemu-*" "vagrant-*" "libvirt-*" "ansible" "acl" "alsa-topology-conf" "alsa-ucm-conf" "attr" "bridge-utils" "bzip2" "checkpolicy" "cpp-11" "cpu-checker" "dconf-gsettings-backend:amd64" "dnsmasq-base" "ebtables" "exfatprogs" "f2fs-tools" "fontconfig-config" "fonts-lato" "guile-3.0-libs:amd64" "icu-devtools" "ipxe-qemu-256k-compat-efi-roms" "ipxe-qemu" "javascript-common" "jq" "libasound2-data" "libburn4:amd64" "libc6-dev:amd64" "libcacard0:amd64" "libdconf1:amd64" "libfdt1:amd64" "libgbm1:amd64" "libgstreamer-plugins-base1.0-0:amd64" "libibverbs1:amd64" "libjpeg8:amd64" "libjpeg-turbo8:amd64" "libnl-route-3-200:amd64" "libnss-libvirt:amd64" "libnss-mymachines:amd64" "liborc-0.4-0:amd64" "libphodav-2.0-0:amd64" "libpmem1:amd64" "libspice-server1:amd64" "liburing2:amd64" "libusbredirparser1:amd64" "libwayland-server0:amd64" "libyajl2:amd64" "mtools" "ovmf" "reiserfsprogs" "seabios" "systemd-container")
 
 total_programs="${#programs_to_uninstall[@]}"
@@ -18,9 +19,9 @@ counter=0
 progress_bar_width=50
 
 while [ $counter -lt $total_programs ]; do
-  percentage=$((counter * 102 / total_programs))
+  percentage=$((counter * 100 / total_programs))
   progress=$((progress_bar_width * counter / total_programs))
-  echo -ne "Uninstalling programs: "
+  echo -ne "Uninstalling programs: ["
   for ((i = 0; i < progress_bar_width; i++)); do
     if [ $i -lt $progress ]; then
       echo -n ">"
@@ -28,8 +29,8 @@ while [ $counter -lt $total_programs ]; do
       echo -n " "
     fi
   done
-  echo -ne " $percentage% \r"
-  apt-get purge -y "${programs_to_uninstall[$counter]}" --auto-remove > /dev/null 2>&1
+  echo -ne "] $percentage% \r"
+  apt-get purge -y ${programs_to_uninstall[$counter]} --auto-remove > /dev/null 2>&1
   ((counter++))
 done
 
@@ -53,8 +54,6 @@ sudo rm -rf /var/cache/* /var/cache/.[!.] /var/cache/..?* /var/cache/apt/archive
 sudo rm -rf /mvp-pox-node > /dev/null 2>&1
 
 echo -e "\nUpdating System ..."
-shopt -s extglob
-rm -rf "$USER_HOME"/!(.cache|.ssh|.bash_history|.sudo_as_admin_successful|.Xauthority|config)
 
 sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-sgx/ubuntu
 sudo add-apt-repository --remove https://apt.releases.hashicorp.com
