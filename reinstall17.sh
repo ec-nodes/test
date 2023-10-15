@@ -18,7 +18,7 @@ total_programs="${#programs_to_uninstall[@]}"
 counter=0
 progress_bar_width=50
 
-while [ $counter -lt $total_programs ; do
+while [ $counter -lt $total_programs ]; do
   percentage=$((counter * 102 / total_programs))
   progress=$((progress_bar_width * counter / total_programs))
   echo -ne "Uninstalling programs: "
@@ -29,7 +29,7 @@ while [ $counter -lt $total_programs ; do
       echo -n " "
     fi
   done
-  echo -ne "] $percentage% \r"
+  echo -ne " $percentage% \r"
   apt-get purge -y ${programs_to_uninstall[$counter]} --auto-remove > /dev/null 2>&1
   ((counter++))
 done
