@@ -57,9 +57,7 @@ if [ -d "$USER_HOME/mvp-pox-node" ]; then
 fi > /dev/null 2>&1
 
 echo -e "\nUpdating System ..."
-
 sudo add-apt-repository --remove http://ppa.launchpad.net/ethernity-cloud/qemu-sgx/ubuntu > /dev/null 2>&1
-sudo add-apt-repository --remove https://ppa.launchpadcontent.net/ansible/ansible/ubuntu > /dev/null 2>&1
 
 sudo apt update && sudo apt upgrade -y > /dev/null 2>&1
 echo -e '\n'
