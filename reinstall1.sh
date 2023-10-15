@@ -12,7 +12,7 @@ sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv > /dev/null 2>&1
 
 sudo apt-mark unhold "qemu-system-common" "qemu-system-data" "qemu-system-x86" "qemu-utils"
 
-programs_to_uninstall=("qemu-*" "vagrant-*" "libvirt-*" "ansible" "sg3-utils-*" "libsgutils2-2" "acl" "attr" "bridge-utils" "bzip2" "checkpolicy" "cpp-11" "cpu-checker" "dconf-gsettings-backend:amd64" "dnsmasq-base" "ebtables" "exfatprogs" "f2fs-tools" "fontconfig-config" "guile-3.0-libs:amd64" "icu-devtools" "libburn4:amd64" "libc6-dev:amd64" "libnss-libvirt:amd64" "libnss-mymachines:amd64" "libyajl2:amd64" "mtools" "reiserfsprogs" "systemd-container")
+programs_to_uninstall=("qemu-system-common" "qemu-system-data" "qemu-system-x86" "qemu-utils" "vagrant-*" "libvirt-*" "ansible" "sg3-utils-*" "libsgutils2-2" "acl" "attr" "bridge-utils" "bzip2" "checkpolicy" "cpp-11" "cpu-checker" "dconf-gsettings-backend:amd64" "dnsmasq-base" "ebtables" "exfatprogs" "f2fs-tools" "fontconfig-config" "guile-3.0-libs:amd64" "icu-devtools" "libburn4:amd64" "libc6-dev:amd64" "libnss-libvirt:amd64" "libnss-mymachines:amd64" "libyajl2:amd64" "mtools" "reiserfsprogs" "systemd-container")
 
 total_programs="${#programs_to_uninstall[@]}"
 counter=0
