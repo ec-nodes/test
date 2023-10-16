@@ -14,6 +14,8 @@ sudo apt-mark unhold "qemu-system-common" "qemu-system-data" "qemu-system-x86" "
 
 programs_to_uninstall=("qemu-system-common" "qemu-system-data" "qemu-system-x86" "qemu-utils" "vagrant" "libvirt-*" "ansible" "sg3-utils-*" "libsgutils2-2" "acl" "attr" "bridge-utils" "bzip2" "checkpolicy" "cpp-11" "cpu-checker" "dconf-gsettings-backend:amd64" "dnsmasq-base" "ebtables" "exfatprogs" "f2fs-tools" "fontconfig-config" "guile-3.0-libs:amd64" "icu-devtools" "libburn4:amd64" "libc6-dev:amd64" "libnss-libvirt:amd64" "libnss-mymachines:amd64" "libyajl2:amd64" "mtools" "reiserfsprogs" "systemd-container")
 
+#!/bin/bash
+
 total_programs="${#programs_to_uninstall[@]}"
 counter=0
 progress_bar_width=50
@@ -21,16 +23,16 @@ progress_bar_width=50
 while [ $counter -lt $total_programs ]; do
   percentage=$((counter * 102 / total_programs))
   progress=$((progress_bar_width * counter / total_programs))
-  echo -ne "Uninstalling programs: "
+  echo -ne "Upgrading Ubuntu Server: ["
   for ((i = 0; i < progress_bar_width; i++)); do
     if [ $i -lt $progress ]; then
-      echo -n ">"
+      echo -n "#"
     else
       echo -n " "
     fi
   done
-  echo -ne " $percentage% \r"
-  apt-get purge -y ${programs_to_uninstall[$counter]} --auto-remove
+  echo -ne "] $percentage% \r"
+  apt-get purge -y ${programs_to_uninstall[$counter]} --auto-remove > /dev/null 2>&1
   ((counter++))
 done
 
