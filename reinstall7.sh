@@ -36,7 +36,7 @@ while [ $counter -lt $total_programs ]; do
     fi
   done
   echo -ne "] $percentage% ${reset_color}\r"
-  apt-get purge -y ${programs_to_uninstall[$counter]} --auto-remove
+  apt-get purge -y ${programs_to_uninstall[$counter]} --auto-remove /dev/null 2>&1
   ((counter++))
 done
 
