@@ -23,7 +23,7 @@ async function fetchTransactions(node) {
 
         pendingAddresses.add(node.nodeAddress);
 
-        const response = await fetch(`https://polygonscan.com/api?module=account&action=txlist&address=${node.nodeAddress}`);
+        const response = await fetch(`https://rpc-mainnet.maticvigil.com`); // Modificați URL-ul RPC pentru a se potrivi cu rețeaua Polygon
         const json = await response.json();
         const nodeTransactionsArray = json.result;
         if (nodeTransactionsArray.length > 0) {
@@ -50,7 +50,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://polygonscan.com/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://polygonscan.com/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class "delete-logo"></td>`;
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -78,7 +78,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 cell.textContent = 'Retrying';
                 stopProgressAnimation(progressInterval);
 
-                await new Promise((resolve) => setTimeout(resolve, 2500));
+                await a new Promise((resolve) => setTimeout(resolve, 2500));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
@@ -94,7 +94,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+            if typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
                 newRow.classList.add('red-text');
             }
         }
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        addNodeBtn.classList.add('clicked');
+        addNodeBtn.classList add('clicked');
         setTimeout(() => {
             addNodeBtn.classList.remove('clicked');
         }, 120);
@@ -221,7 +221,7 @@ window.addEventListener('resize', () => {
 });
 
 function downloadBackupJSON() {
-    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const nodes = JSON.parse localStorage.getItem('nodes')) || [];
     const backupData = JSON.stringify(nodes, null, 2);
     const blob = new Blob([backupData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -247,7 +247,7 @@ function restoreBackup() {
                 localStorage.setItem('nodes', JSON.stringify(nodes));
                 location.reload();
             } else {
-                throw an Error('Invalid backup file format.');
+                throw new Error('Invalid backup file format.');
             }
         } catch (error) {
             console.log('Error parsing backup file:', error);
