@@ -62,7 +62,7 @@ async function updateCellWithTransactionTime() {
                 newRow.classList.add('red-text');
             }
         } else {
-            cell.textContent = 'Retrying';
+            cell.textContent = 'Retry';
             stopProgressAnimation(progressInterval);
 
             await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -74,7 +74,7 @@ async function updateCellWithTransactionTime() {
                     newRow.classList.add('red-text');
                 }
             } else {
-                cell.textContent = 'Bloxberg Fail';
+                cell.textContent = 'Network error';
                 stopProgressAnimation(progressInterval);
             }
         }
