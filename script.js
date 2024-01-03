@@ -74,22 +74,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
                     newRow.classList.add('red-text');
                 }
-            } else {
-                cell.textContent = 'Retrying';
-                stopProgressAnimation(progressInterval);
-
-                await new Promise((resolve) => setTimeout(resolve, 2500));
-                const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
-                if (secondRetryResponse) {
-                    cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
-                    stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
-                        newRow.classList.add('red-text');
-                    }
-                } else {
-                    cell.textContent = 'Network Fail';
-                    stopProgressAnimation(progressInterval);
-                }
             }
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
