@@ -1,84 +1,258 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css"> <!-- Asigurați-vă că aveți un fișier CSS numit style.css -->
-    <title>Etnynodes.ro - Servere Dell preconfigurate pentru Ethernity Cloud si Etny Base Stake</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-</head>
-<body>
-<script>
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
+const existingAddresses = new Set();
+const pendingAddresses = new Set();
+
+function startProgressAnimation(cell) {
+    let progress = 1;
+    const progressText = [".", "..", "..."];
+    const progressInterval = setInterval(() => {
+        cell.textContent = progressText[progress % 4];
+        progress++;
+    }, 300);
+    return progressInterval;
+}
+
+function stopProgressAnimation(progressInterval) {
+    clearInterval(progressInterval);
+}
+
+async function fetchTransactions(node) {
+    try {
+        if (pendingAddresses.has(node.nodeAddress)) {
+            return null;
+        }
+
+        pendingAddresses.add(node.nodeAddress);
+
+        const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
+        const json = await response.json();
+        const nodeTransactionsArray = json.result;
+        if (nodeTransactionsArray.length > 0) {
+            existingAddresses.add(node.nodeAddress);
+            pendingAddresses.delete(node.nodeAddress);
+            const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
+            return { ...node, lastTransactionTime };
+        }
+    } catch (error) {
+        console.log(error);
+    } finally {
+        pendingAddresses.delete(node.nodeAddress);
+    }
+}
+
+function generateNewNodeAddressText(nodeAddress) {
+    return window.innerWidth < window.innerHeight ? `${nodeAddress.substr(0, 5)}. . .${nodeAddress.substr(-4)}` : nodeAddress;
+}
+
+function addNodeToTable(nodeName, nodeAddress, transactionTime) {
+    const table = document.getElementById('myTable');
+    const newRow = table.insertRow();
+    const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+
+    const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
+
+    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    const deleteLogo = newRow.querySelector('.delete-logo');
+    deleteLogo.addEventListener('click', () => {
+        const confirmation = confirm("Please confirm this action!");
+        if (confirmation) {
+            table.deleteRow(newRow.rowIndex);
+            deleteNodeFromStorage(nodeAddress);
+        }
     });
 
-    particlesJS.load('particles-js', '/particles.json', function() {
-        console.log('callback - particles.js config loaded');
+    const cell = newRow.cells[2];
+
+    async function updateCellWithTransactionTime() {
+        const response = await fetchTransactions({ nodeName, nodeAddress });
+
+        if (!response) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
+            if (retryResponse) {
+                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
+                stopProgressAnimation(progressInterval);
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
+                    newRow.classList.add('red-text');
+                }
+            } else {
+                cell.textContent = 'Retrying';
+                stopProgressAnimation(progressInterval);
+
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
+                if (secondRetryResponse) {
+                    cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
+                    stopProgressAnimation(progressInterval);
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
+                        newRow.classList.add('red-text');
+                    }
+                } else {
+                    cell.textContent = 'Network Fail';
+                    stopProgressAnimation(progressInterval);
+                }
+            }
+        } else {
+            cell.textContent = response.lastTransactionTime || 'Last Hour';
+            stopProgressAnimation(progressInterval);
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+                newRow.classList.add('red-text');
+            }
+        }
+    }
+
+    const progressInterval = startProgressAnimation(cell);
+    updateCellWithTransactionTime();
+}
+
+const nodeNameInput = document.getElementById('node-name');
+const nodeAddressInput = document.getElementById('node-address');
+const addNodeBtn = document.getElementById('add-node');
+
+nodeNameInput.addEventListener('keyup', (event) => {
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        addNodeBtn.click();
+    }
+});
+
+nodeAddressInput.addEventListener('keyup', (event) => {
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        addNodeBtn.click();
+    }
+});
+
+function deleteNodeFromStorage(nodeAddress) {
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const updatedNodes = nodes.filter((node) => node.nodeAddress !== nodeAddress);
+    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
+}
+
+function addNodeToDatabase(nodeName, nodeAddress) {
+    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+        alert('Please complete both fields!');
+        return;
+    }
+
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const newNode = { nodeName, nodeAddress };
+    nodes.push(newNode);
+    localStorage.setItem('nodes', JSON.stringify(nodes));
+}
+
+async function loadNodesData() {
+    const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const table = document.getElementById('myTable');
+
+    existingAddresses.clear();
+    pendingAddresses.clear();
+
+    table.style.display = 'table';
+
+    await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
+        try {
+            const response = await fetchTransactions({ nodeName, nodeAddress });
+            if (response) {
+                const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+                const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
+                const cell = row.cells[2];
+                const progressInterval = startProgressAnimation(cell);
+
+                setTimeout(() => {
+                    cell.textContent = response.lastTransactionTime || 'Last Hour';
+                    stopProgressAnimation(progressInterval);
+                }, 1000);
+
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+                    row.classList.add('red-text');
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching data for ${nodeAddress}: ${error}`);
+        }
+    }));
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadNodesData();
+
+    const addNodeBtn = document.getElementById('add-node');
+    addNodeBtn.addEventListener('click', async () => {
+        const nodeName = document.getElementById('node-name').value;
+        const nodeAddress = document.getElementById('node-address').value;
+
+        if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+            alert('Please complete both fields!');
+            return;
+        }
+
+        if (existingAddresses.has(nodeAddress)) {
+            alert('This address already exists!');
+            return;
+        }
+
+        addNodeBtn.classList.add('clicked');
+        setTimeout(() => {
+            addNodeBtn.classList.remove('clicked');
+        }, 120);
+
+        const nodeData = await fetchTransactions({ nodeName, nodeAddress });
+        if (nodeData) {
+            addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
+            addNodeToDatabase(nodeName, nodeAddress);
+            document.getElementById('node-name').value = '';
+            document.getElementById('node-address').value = '';
+            existingAddresses.add(nodeAddress);
+        }
     });
-</script>
+});
 
-<div id="particles-js"></div>
-<div class="container" id="home">
-    <!-- Bara de navigare -->
-    <nav class="navbar navbar-dark navbar-expand-lg bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="https://www.etnynodes.ro">Etnynodes.ro</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link m-0" href="/#produse">Produse</a></li>
-                    <li class="nav-item"><a class="nav-link m-0" href="/login.php">Nodes monitoring tool</a></li>
-                    <li class="nav-item"><a class="nav-link m-0" href="/contact.php">Contact</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+window.addEventListener('resize', () => {
+    const addresses = document.querySelectorAll('td:nth-child(2) a');
+    addresses.forEach((address) => {
+        address.textContent = generateNewNodeAddressText(address.textContent);
+    });
+});
 
-    <!-- Restul conținutului paginii -->
-    <div>
-        <!-- Secțiunea cu informații despre companie -->
-        <div class="text-white my-5 text-center">
-            <h1 class="display-2 my-4 text-center"><img src="/images/logo-database.svg" alt="Logo" style="height: 200px; max-width: 90%"/></h1>
-            <p class="display-6">
-                <span style="font-weight: 200">DECENTRALIZED CONFIDENTIAL CLOUD COMPUTING</span><br>
-                <strong>WEB3 INFRASTRUCTURE SOLUTIONS PROVIDER</strong>
-            </p>
-        </div>
+function downloadBackupJSON() {
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const backupData = JSON.stringify(nodes, null, 2);
+    const blob = new Blob([backupData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
 
-        <!-- Secțiunea cu produse -->
-        <div class="row text-white bg-black" style="margin-top: 150px">
-            <div class="col-lg-4 border border-grey p-5 border-end-0 text-center" style="background-image: url(/images/data-lake.jpg); background-position: center; background-repeat: no-repeat; background-size: cover;">
-                <div style="margin-top: -135px;"><a href="/login.php"><img src="/images/v2.png" style="max-width: 100%"></a></div>
-                <div style="margin-top: 135px;"></div>
-                <h2>Servere DELL PowerEdge 750xs fabricate in 2023</h2><br><br>
-                <p class="fs-4">Pachet pentru 10 Servere</p>
-                <p class="display-6 fw-lighter mb-3">Etny Cloud + Etny Stake <span style="color: #f50c77"><b>€3500</b></span></p>
-                <p class="fs-5">Free worldwide delivery</p>
-            </div>
-            <div class="col-lg-8 border border-grey p-5 text-center">
-                <h2>Despre Produs</h2><br>
-                <p class="fs-5">Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae risus a nunc fermentum elementum. Sed euismod interdum nisi vel tincidunt. Duis ultricies malesuada turpis, eu sollicitudin risus scelerisque id. Nulla facilisi. Vivamus a mi in orci aliquam convallis. Praesent ut ante vitae turpis pharetra tristique. Aliquam sed quam vel eros iaculis ultricies. Nam dignissim libero sed dui facilisis, sit amet malesuada justo efficitur.</p>
-            </div>
-        </div>
-    </div>
-</div>
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'Nodes_Backup.json';
+    link.click();
 
-<!-- Script-uri Bootstrap -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-rZyo1gE4tYof5yo1Lq8T9Ip8hkk/9+EW6D7gIf5u73JgIbbVcD5OWB5c5fB5" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-eFJY0EAgaxt1f5T3eQqqWuUJdLMyvpcxy5uy9pLmOp3MkOpVr5PbpHEaa5Hwtp5l" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    URL.revokeObjectURL(url);
+}
 
-</body>
-</html>
+function restoreBackup() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        const contents = await file.text();
+        try {
+            const nodes = JSON.parse(contents);
+            if (Array.isArray(nodes)) {
+                localStorage.setItem('nodes', JSON.stringify(nodes));
+                location.reload();
+            } else {
+                throw new Error('Invalid backup file format.');
+            }
+        } catch (error) {
+            console.log('Error parsing backup file:', error);
+            alert('Error parsing backup file. Please make sure the file is in the correct format.');
+        }
+    });
+    input.click();
+}
+
+const downloadBackupBtn = document.getElementById('download-backup');
+downloadBackupBtn.addEventListener('click', downloadBackupJSON);
+
+const restoreBackupBtn = document.getElementById('restore-backup');
+restoreBackupBtn.addEventListener('click', restoreBackup);
