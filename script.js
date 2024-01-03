@@ -132,29 +132,38 @@ async function loadNodesData() {
 
     table.style.display = 'table';
 
-    storedNodes.forEach(({ nodeName, nodeAddress }) => {
-        const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-        addNodeToTable(nodeName, nodeAddress, '.');
-        existingAddresses.add(nodeAddress);
-    });
-
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
         try {
             const response = await fetchTransactions({ nodeName, nodeAddress });
             if (response) {
                 const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-                const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
-                const cell = row.cells[2];
-                const progressInterval = startProgressAnimation(cell);
+                const newRow = table.insertRow();
+                const cell = newRow.insertCell();
+                const deleteCell = newRow.insertCell();
+                const deleteLogo = document.createElement('img');
+                deleteLogo.src = 'https://i.ibb.co/xHbVTPk/delete-3.webp';
+                deleteLogo.alt = 'Delete';
+                deleteLogo.className = 'delete-logo';
+                deleteCell.appendChild(deleteLogo);
 
-                setTimeout(() => {
-                    cell.textContent = response.lastTransactionTime || 'Last Hour';
-                    stopProgressAnimation(progressInterval);
-                }, 2000);
+                const transactionTime = response.lastTransactionTime || 'Last Hour';
+                cell.textContent = transactionTime;
+                newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTime}</td>`;
+                newRow.appendChild(deleteCell);
+
+                deleteLogo.addEventListener('click', () => {
+                    const confirmation = confirm("Please confirm this action!");
+                    if (confirmation) {
+                        table.deleteRow(newRow.rowIndex);
+                        deleteNodeFromStorage(nodeAddress);
+                    }
+                });
 
                 if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-                    row.classList.add('red-text');
+                    newRow.classList.add('red-text');
                 }
+
+                existingAddresses.add(nodeAddress);
             }
         } catch (error) {
             console.error(`Error fetching data for ${nodeAddress}: ${error}`);
