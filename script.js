@@ -23,9 +23,14 @@ async function fetchTransactions(node) {
 
         pendingAddresses.add(node.nodeAddress);
 
-        const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
+        const response = await Promise.race([
+            fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), 5000)) // Timp limită pentru cerere: 5 secunde
+        ]);
+
         const json = await response.json();
         const nodeTransactionsArray = json.result;
+        
         if (nodeTransactionsArray.length > 0) {
             existingAddresses.add(node.nodeAddress);
             pendingAddresses.delete(node.nodeAddress);
@@ -66,37 +71,16 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         const response = await fetchTransactions({ nodeName, nodeAddress });
 
         if (!response) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-            if (retryResponse) {
-                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
-                stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
-                    newRow.classList.add('red-text');
-                }
-            } else {
-                cell.textContent = 'Retrying';
-                stopProgressAnimation(progressInterval);
-
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-                const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
-                if (secondRetryResponse) {
-                    cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
-                    stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
-                        newRow.classList.add('red-text');
-                    }
-                } else {
-                    cell.textContent = 'Network Fail';
-                    stopProgressAnimation(progressInterval);
-                }
-            }
-        } else {
-            cell.textContent = response.lastTransactionTime || 'Last Hour';
+            cell.textContent = 'No Data';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
-                newRow.classList.add('red-text');
-            }
+            return;
+        }
+
+        cell.textContent = response.lastTransactionTime || 'Last Hour';
+        stopProgressAnimation(progressInterval);
+        
+        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+            newRow.classList.add('red-text');
         }
     }
 
@@ -140,14 +124,21 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
+const existingAddresses = new Set();
+
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const table = document.getElementById('myTable');
 
     existingAddresses.clear();
-    pendingAddresses.clear();
 
     table.style.display = 'table';
+
+    storedNodes.forEach(({ nodeName, nodeAddress }) => {
+        const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+        addNodeToTable(nodeName, nodeAddress, '.');
+        existingAddresses.add(nodeAddress);
+    });
 
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
         try {
@@ -161,9 +152,9 @@ async function loadNodesData() {
                 setTimeout(() => {
                     cell.textContent = response.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                }, 1000);
+                }, 2000);
 
-                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                     row.classList.add('red-text');
                 }
             }
