@@ -1,6 +1,3 @@
-const existingAddresses = new Set();
-const pendingAddresses = new Set();
-
 function startProgressAnimation(cell) {
     let progress = 1;
     const progressText = [".", "..", "..."];
@@ -17,30 +14,15 @@ function stopProgressAnimation(progressInterval) {
 
 async function fetchTransactions(node) {
     try {
-        if (pendingAddresses.has(node.nodeAddress)) {
-            return null;
-        }
-
-        pendingAddresses.add(node.nodeAddress);
-
-        const response = await Promise.race([
-            fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), 5000))
-        ]);
-
+        const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
         const json = await response.json();
         const nodeTransactionsArray = json.result;
-
         if (nodeTransactionsArray.length > 0) {
-            existingAddresses.add(node.nodeAddress);
-            pendingAddresses.delete(node.nodeAddress);
             const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
         console.log(error);
-    } finally {
-        pendingAddresses.delete(node.nodeAddress);
     }
 }
 
@@ -67,25 +49,34 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const cell = newRow.cells[2];
 
-    async function updateCellWithTransactionTime() {
-        const response = await fetchTransactions({ nodeName, nodeAddress });
+    async function updateCellWithTransactionTime(nodeName, nodeAddress) {
+        const progressInterval = startProgressAnimation(cell);
 
-        if (!response) {
-            cell.textContent = 'No Data';
-            stopProgressAnimation(progressInterval);
-            return;
-        }
+        const fetchWithRetry = async () => {
+            try {
+                const response = await fetchTransactions({ nodeName, nodeAddress });
+                if (response) {
+                    cell.textContent = response.lastTransactionTime || 'Last Hour';
+                    stopProgressAnimation(progressInterval);
+                    if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                        newRow.classList.add('red-text');
+                    }
+                }
+            } catch (error) {
+                console.error(`Error fetching data for ${nodeAddress}: ${error}`);
+            }
+        };
 
-        cell.textContent = response.lastTransactionTime || 'Last Hour';
-        stopProgressAnimation(progressInterval);
+        const waitForResponse = async () => {
+            await new Promise((resolve) => setTimeout(resolve, 4000));
+            await fetchWithRetry();
+        };
 
-        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-            newRow.classList.add('red-text');
-        }
+        await waitForResponse();
     }
 
     const progressInterval = startProgressAnimation(cell);
-    updateCellWithTransactionTime();
+    updateCellWithTransactionTime(nodeName, nodeAddress);
 }
 
 const nodeNameInput = document.getElementById('node-name');
@@ -124,6 +115,8 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
+const existingAddresses = new Set();
+
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const table = document.getElementById('myTable');
@@ -132,38 +125,29 @@ async function loadNodesData() {
 
     table.style.display = 'table';
 
+    storedNodes.forEach(({ nodeName, nodeAddress }) => {
+        const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
+        addNodeToTable(nodeName, nodeAddress, '.');
+        existingAddresses.add(nodeAddress);
+    });
+
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
         try {
             const response = await fetchTransactions({ nodeName, nodeAddress });
             if (response) {
                 const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-                const newRow = table.insertRow();
-                const cell = newRow.insertCell();
-                const deleteCell = newRow.insertCell();
-                const deleteLogo = document.createElement('img');
-                deleteLogo.src = 'https://i.ibb.co/xHbVTPk/delete-3.webp';
-                deleteLogo.alt = 'Delete';
-                deleteLogo.className = 'delete-logo';
-                deleteCell.appendChild(deleteLogo);
+                const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
+                const cell = row.cells[2];
+                const progressInterval = startProgressAnimation(cell);
 
-                const transactionTime = response.lastTransactionTime || 'Last Hour';
-                cell.textContent = transactionTime;
-                newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTime}</td>`;
-                newRow.appendChild(deleteCell);
-
-                deleteLogo.addEventListener('click', () => {
-                    const confirmation = confirm("Please confirm this action!");
-                    if (confirmation) {
-                        table.deleteRow(newRow.rowIndex);
-                        deleteNodeFromStorage(nodeAddress);
-                    }
-                });
+                setTimeout(() => {
+                    cell.textContent = response.lastTransactionTime || 'Last Hour';
+                    stopProgressAnimation(progressInterval);
+                }, 2000);
 
                 if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-                    newRow.classList.add('red-text');
+                    row.classList.add('red-text');
                 }
-
-                existingAddresses.add(nodeAddress);
             }
         } catch (error) {
             console.error(`Error fetching data for ${nodeAddress}: ${error}`);
@@ -171,38 +155,25 @@ async function loadNodesData() {
     }));
 }
 
+async function updateNodesWithTransactionTime() {
+    const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
+
+    for (const { nodeName, nodeAddress } of storedNodes) {
+        const existingNode = document.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
+        const cell = existingNode.cells[2];
+
+        await updateCellWithTransactionTime(nodeName, nodeAddress);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadNodesData();
+    await updateNodesWithTransactionTime();
 
-    const addNodeBtn = document.getElementById('add-node');
-    addNodeBtn.addEventListener('click', async () => {
-        const nodeName = document.getElementById('node-name').value;
-        const nodeAddress = document.getElementById('node-address').value;
-
-        if (nodeName.trim() === '' || nodeAddress.trim() === '') {
-            alert('Please complete both fields!');
-            return;
-        }
-
-        if (existingAddresses.has(nodeAddress)) {
-            alert('This address already exists!');
-            return;
-        }
-
-        addNodeBtn.classList.add('clicked');
-        setTimeout(() => {
-            addNodeBtn.classList.remove('clicked');
-        }, 120);
-
-        const nodeData = await fetchTransactions({ nodeName, nodeAddress });
-        if (nodeData) {
-            addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
-            addNodeToDatabase(nodeName, nodeAddress);
-            document.getElementById('node-name').value = '';
-            document.getElementById('node-address').value = '';
-            existingAddresses.add(nodeAddress);
-        }
-    });
+    // Set up an interval to repeatedly update nodes every 4 seconds
+    setInterval(async () => {
+        await updateNodesWithTransactionTime();
+    }, 4000);
 });
 
 window.addEventListener('resize', () => {
