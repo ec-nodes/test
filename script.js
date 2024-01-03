@@ -27,15 +27,15 @@ async function fetchTransactions(node) {
         const json = await response.json();
         const nodeTransactionsArray = json.result;
         if (nodeTransactionsArray.length > 0) {
-            existingAddresses.add(node.nodeAddress); // Marchează adresa ca având răspuns
-            pendingAddresses.delete(node.nodeAddress); // Elimină adresa din lista de așteptare
+            existingAddresses.add(node.nodeAddress);
+            pendingAddresses.delete(node.nodeAddress);
             const lastTransactionTime = Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600);
             return { ...node, lastTransactionTime };
         }
     } catch (error) {
         console.log(error);
     } finally {
-        pendingAddresses.delete(node.nodeAddress); // Asigură-te că adresa este eliminată din lista de așteptare în caz de eroare
+        pendingAddresses.delete(node.nodeAddress);
     }
 }
 
@@ -66,35 +66,35 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         const response = await fetchTransactions({ nodeName, nodeAddress });
 
         if (!response) {
-            await new Promise((resolve) => setTimeout(resolve, 4000));
+            await new Promise((resolve) => setTimeout(resolve, 2500));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
                     newRow.classList.add('red-text');
                 }
             } else {
                 cell.textContent = 'Retrying';
                 stopProgressAnimation(progressInterval);
 
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 2500));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
                         newRow.classList.add('red-text');
                     }
                 } else {
-                    cell.textContent = 'Bloxberg Fail';
+                    cell.textContent = 'Network Fail';
                     stopProgressAnimation(progressInterval);
                 }
             }
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
                 newRow.classList.add('red-text');
             }
         }
@@ -167,9 +167,9 @@ async function loadNodesData() {
                 setTimeout(() => {
                     cell.textContent = response.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                }, 2000);
+                }, 1000);
 
-                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
                     row.classList.add('red-text');
                 }
             }
@@ -262,3 +262,60 @@ downloadBackupBtn.addEventListener('click', downloadBackupJSON);
 
 const restoreBackupBtn = document.getElementById('restore-backup');
 restoreBackupBtn.addEventListener('click', restoreBackup);
+
+// ... existing code ...
+
+function contextMenuHandler(event, node) {
+    const contextMenu = document.createElement('div');
+    contextMenu.classList.add('context-menu');
+    contextMenu.innerHTML = `
+        <div class="context-menu-item" id="change-node-name">Change Node Name</div>
+        <div class="context-menu-item" id="change-node-address">Change Node Address</div>
+    `;
+    
+    document.body.appendChild(contextMenu);
+    
+    const { clientX, clientY } = event;
+
+    contextMenu.style.left = `${clientX}px`;
+    contextMenu.style.top = `${clientY}px`;
+
+    const changeNodeNameOption = document.getElementById('change-node-name');
+    const changeNodeAddressOption = document.getElementById('change-node-address');
+
+    changeNodeNameOption.addEventListener('click', () => {
+        const newName = prompt("Enter new node name:");
+        if (newName !== null) {
+            // Handle the logic to change the node name
+            // You may need to update the UI or send a request to the server
+        }
+        document.body.removeChild(contextMenu);
+    });
+
+    changeNodeAddressOption.addEventListener('click', () => {
+        const newAddress = prompt("Enter new node address:");
+        if (newAddress !== null) {
+            // Handle the logic to change the node address
+            // You may need to update the UI or send a request to the server
+        }
+        document.body.removeChild(contextMenu);
+    });
+
+    document.addEventListener('click', () => {
+        document.body.removeChild(contextMenu);
+    });
+}
+
+document.getElementById('myTable').addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+
+    // Get the node information from the clicked row
+    const clickedRow = event.target.closest('tr');
+    const nodeName = clickedRow.cells[0].textContent;
+    const nodeAddress = clickedRow.cells[1].querySelector('a').textContent;
+
+    // Call the contextMenuHandler with the node information
+    contextMenuHandler(event, { nodeName, nodeAddress });
+});
+
+// ... remaining code ...
