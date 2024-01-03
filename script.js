@@ -49,31 +49,33 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const cell = newRow.cells[2];
 
-    async function updateCellWithTransactionTime(nodeName, nodeAddress) {
-        const progressInterval = startProgressAnimation(cell);
+async function updateCellWithTransactionTime(nodeName, nodeAddress) {
+    const cell = document.querySelector(`td a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.nextElementSibling;
 
-        const fetchWithRetry = async () => {
-            try {
-                const response = await fetchTransactions({ nodeName, nodeAddress });
-                if (response) {
-                    cell.textContent = response.lastTransactionTime || 'Last Hour';
-                    stopProgressAnimation(progressInterval);
-                    if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-                        newRow.classList.add('red-text');
-                    }
+    const progressInterval = startProgressAnimation(cell);
+
+    const fetchWithRetry = async () => {
+        try {
+            const response = await fetchTransactions({ nodeName, nodeAddress });
+            if (response) {
+                cell.textContent = response.lastTransactionTime || 'Last Hour';
+                stopProgressAnimation(progressInterval);
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                    cell.parentNode.classList.add('red-text');
                 }
-            } catch (error) {
-                console.error(`Error fetching data for ${nodeAddress}: ${error}`);
             }
-        };
+        } catch (error) {
+            console.error(`Error fetching data for ${nodeAddress}: ${error}`);
+        }
+    };
 
-        const waitForResponse = async () => {
-            await new Promise((resolve) => setTimeout(resolve, 4000));
-            await fetchWithRetry();
-        };
+    const waitForResponse = async () => {
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        await fetchWithRetry();
+    };
 
-        await waitForResponse();
-    }
+    await waitForResponse();
+}
 
     const progressInterval = startProgressAnimation(cell);
     updateCellWithTransactionTime(nodeName, nodeAddress);
