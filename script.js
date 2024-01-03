@@ -30,7 +30,7 @@ async function fetchTransactions(node) {
 
         const json = await response.json();
         const nodeTransactionsArray = json.result;
-        
+
         if (nodeTransactionsArray.length > 0) {
             existingAddresses.add(node.nodeAddress);
             pendingAddresses.delete(node.nodeAddress);
@@ -78,7 +78,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
         cell.textContent = response.lastTransactionTime || 'Last Hour';
         stopProgressAnimation(progressInterval);
-        
+
         if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
             newRow.classList.add('red-text');
         }
