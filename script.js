@@ -25,7 +25,7 @@ async function fetchTransactions(node) {
 
         const response = await Promise.race([
             fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), 5000)) // Timp limită pentru cerere: 5 secunde
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), 5000))
         ]);
 
         const json = await response.json();
@@ -123,8 +123,6 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     nodes.push(newNode);
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
-
-const existingAddresses = new Set();
 
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
