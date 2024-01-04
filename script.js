@@ -48,13 +48,15 @@ async function updateCellWithTransactionTime(nodeName, nodeAddress, cell, progre
     const response = await fetchTransactions({ nodeName, nodeAddress });
 
     if (!response) {
+        // Așteaptă mai mult înainte de prima încercare
+        cell.textContent = 'Retrying';
+        stopProgressAnimation(progressInterval);
+        await new Promise((resolve) => setTimeout(resolve, 8000)); // Timpul de așteptare suplimentar
         for (let retryCount = 0; retryCount < 3; retryCount++) {
             cell.textContent = 'Retrying';
             stopProgressAnimation(progressInterval);
-
             await new Promise((resolve) => setTimeout(resolve, 3500));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
@@ -64,7 +66,6 @@ async function updateCellWithTransactionTime(nodeName, nodeAddress, cell, progre
                 return;
             }
         }
-
         cell.textContent = 'No Response';
         stopProgressAnimation(progressInterval);
     } else {
