@@ -48,13 +48,13 @@ async function updateCellWithTransactionTime(nodeName, nodeAddress, cell, progre
     const response = await fetchTransactions({ nodeName, nodeAddress });
 
     if (!response) {
-        cell.textContent = 'Retrying';
+        cell.textContent = '';
         stopProgressAnimation(progressInterval);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 4000));
         for (let retryCount = 0; retryCount < 3; retryCount++) {
             cell.textContent = 'Retrying';
             stopProgressAnimation(progressInterval);
-            await new Promise((resolve) => setTimeout(resolve, 3500));
+            await new Promise((resolve) => setTimeout(resolve, 3000));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
