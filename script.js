@@ -43,20 +43,28 @@ async function retryFetchTransactions(node, cell, progressInterval) {
     cell.textContent = 'Retrying';
     stopProgressAnimation(progressInterval);
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    const retryResponse = await fetchTransactions(node);
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-    if (retryResponse) {
-        cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
-        stopProgressAnimation(progressInterval);
-        if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
-            node.row.classList.add('red-text');
+    try {
+        const retryResponse = await fetchTransactions(node);
+
+        if (retryResponse) {
+            cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
+            stopProgressAnimation(progressInterval);
+            if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
+                node.row.classList.add('red-text');
+            }
+        } else {
+            cell.textContent = 'Retry Failed';
+            stopProgressAnimation(progressInterval);
         }
-    } else {
+    } catch (error) {
+        console.error(`Error during retry: ${error}`);
         cell.textContent = 'Retry Failed';
         stopProgressAnimation(progressInterval);
     }
 }
+
 
 function generateNewNodeAddressText(nodeAddress) {
     return window.innerWidth < window.innerHeight ? `${nodeAddress.substr(0, 5)}. . .${nodeAddress.substr(-4)}` : nodeAddress;
