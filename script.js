@@ -48,10 +48,9 @@ async function updateCellWithTransactionTime(nodeName, nodeAddress, cell, progre
     const response = await fetchTransactions({ nodeName, nodeAddress });
 
     if (!response) {
-        // Așteaptă mai mult înainte de prima încercare
         cell.textContent = 'Retrying';
         stopProgressAnimation(progressInterval);
-        await new Promise((resolve) => setTimeout(resolve, 8000)); // Timpul de așteptare suplimentar
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         for (let retryCount = 0; retryCount < 3; retryCount++) {
             cell.textContent = 'Retrying';
             stopProgressAnimation(progressInterval);
