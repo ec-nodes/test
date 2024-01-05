@@ -169,3 +169,21 @@
 .context-menu div:hover {
     background-color: #f2f2f2;
 }
+
+.context-menu {
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    padding: 5px;
+    z-index: 1000;
+}
+
+.context-menu-item {
+    cursor: pointer;
+    padding: 5px;
+}
+
+.context-menu-item:hover {
+    background-color: #f0f0f0;
+}
