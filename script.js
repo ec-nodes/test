@@ -308,3 +308,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const table = document.getElementById('myTable');
+
+    table.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            const row = target.parentNode;
+            const nodeAddress = row.querySelector('td:nth-child(2) a').getAttribute('href').split('/').pop();
+            
+            const contextMenu = document.createElement('div');
+            contextMenu.className = 'context-menu';
+            contextMenu.innerHTML = `
+                <div class="context-menu-item" id="change-name">Change Name</div>
+                <div class="context-menu-item" id="change-address">Change Address</div>
+            `;
+            document.body.appendChild(contextMenu);
+
+            contextMenu.style.left = `${event.clientX}px`;
+            contextMenu.style.top = `${event.clientY}px`;
+
+            const changeNameOption = document.getElementById('change-name');
+            const changeAddressOption = document.getElementById('change-address');
+
+            changeNameOption.addEventListener('click', () => {
+                const newName = prompt('Enter new name:');
+                if (newName !== null) {
+                    // Update the name in the table
+                    row.querySelector('td:first-child').textContent = newName;
+                    // TODO: Save the changes to storage
+                }
+                document.body.removeChild(contextMenu);
+            });
+
+            changeAddressOption.addEventListener('click', () => {
+                const newAddress = prompt('Enter new address:');
+                if (newAddress !== null) {
+                    // Update the address in the table
+                    row.querySelector('td:nth-child(2) a').textContent = generateNewNodeAddressText(newAddress);
+                    // TODO: Save the changes to storage
+                }
+                document.body.removeChild(contextMenu);
+            });
+
+            document.addEventListener('click', () => {
+                document.body.removeChild(contextMenu);
+            }, { once: true });
+        }
+    });
+});
