@@ -178,11 +178,11 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
-function updateNodeInStorage(oldNodeAddress, newNodeValue) {
+function updateNodeInStorage(oldNodeAddress, newNodeValue, newNodeAddress) {
     const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const updatedNodes = nodes.map((node) => {
         if (node.nodeAddress === oldNodeAddress) {
-            return { ...node, nodeName: newNodeValue };
+            return { ...node, nodeName: newNodeValue, nodeAddress: newNodeAddress };
         }
         return node;
     });
