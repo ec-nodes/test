@@ -149,6 +149,26 @@ function deleteNodeFromStorage(nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(updatedNodes));
 }
 
+async function saveChanges(row) {
+    const nodeName = row.cells[0].textContent;
+    const nodeAddress = row.cells[1].querySelector('a').textContent;
+
+    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+        alert('Please complete both fields!');
+        return;
+    }
+
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const existingIndex = nodes.findIndex((node) => node.nodeAddress === nodeAddress);
+
+    if (existingIndex !== -1) {
+        // Update existing node
+        nodes[existingIndex] = { nodeName, nodeAddress };
+    }
+
+    localStorage.setItem('nodes', JSON.stringify(nodes));
+}
+
 function addNodeToDatabase(nodeName, nodeAddress) {
     if (nodeName.trim() === '' || nodeAddress.trim() === '') {
         alert('Please complete both fields!');
