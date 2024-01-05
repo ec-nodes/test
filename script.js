@@ -91,6 +91,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                     editNode.textContent = newValue;
                 }
                 updateNodeInStorage(nodeAddress, newValue, isAddress);
+		updateNodeInStorage(nodeAddress, nodeAddress, true);
             }
         });
     });
