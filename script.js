@@ -71,20 +71,26 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td class="edit-node">${nodeName}</td><td class="edit-node" data-address="${nodeAddress}"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    newRow.innerHTML = `<td class="edit-node" data-name="${nodeName}">${nodeName}</td><td class="edit-node" data-address="${nodeAddress}"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
 
     const editNodes = newRow.querySelectorAll('.edit-node');
     editNodes.forEach((editNode) => {
         editNode.addEventListener('click', () => {
-            const newValue = prompt('Enter new value:', editNode.textContent);
+            const isAddress = editNode.dataset.address !== undefined;
+            const promptMessage = isAddress ? 'Enter new address:' : 'Enter new name:';
+            const currentValue = isAddress ? editNode.dataset.address : editNode.dataset.name;
+            
+            const newValue = prompt(promptMessage, currentValue);
+            
             if (newValue !== null && newValue !== "") {
-                if (editNode.dataset.address) {
+                if (isAddress) {
                     editNode.dataset.address = newValue;
                     editNode.querySelector('a').textContent = generateNewNodeAddressText(newValue);
                 } else {
+                    editNode.dataset.name = newValue;
                     editNode.textContent = newValue;
                 }
-                updateNodeInStorage(nodeAddress, newValue);
+                updateNodeInStorage(nodeAddress, newValue, isAddress);
             }
         });
     });
