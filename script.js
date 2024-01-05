@@ -72,7 +72,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
     newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
-    
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -90,11 +89,9 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         if (!response) {
             await new Promise(resolve => setTimeout(resolve, 3000));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-            
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
-
                 if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
                     newRow.classList.add('red-text');
                 }
@@ -104,11 +101,9 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
-
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-
                     if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
                         newRow.classList.add('red-text');
                     }
@@ -120,7 +115,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-
             if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                 newRow.classList.add('red-text');
             }
@@ -185,7 +179,6 @@ async function loadNodesData() {
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
         try {
             const response = await fetchTransactions({ nodeName, nodeAddress });
-
             if (response) {
                 const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
                 const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
@@ -307,85 +300,71 @@ document.addEventListener('DOMContentLoaded', () => {
             target.parentNode.classList.remove('highlight');
         }
     });
-});
 
-// ... (your existing code)
+                          // ... (existing code)
+
+function createContextMenu(nodeName, nodeAddress, rowIndex) {
+    const contextMenu = document.createElement('div');
+    contextMenu.className = 'context-menu';
+    contextMenu.innerHTML = `<div class="context-menu-item" id="edit-node">Edit Node</div>`;
+
+    document.body.appendChild(contextMenu);
+
+    const editNodeMenuItem = document.getElementById('edit-node');
+    editNodeMenuItem.addEventListener('click', () => {
+        const newName = prompt('Enter new name for the node:', nodeName);
+        if (newName !== null) {
+            editNodeInTable(newName, nodeAddress, rowIndex);
+        }
+        document.body.removeChild(contextMenu);
+    });
+
+    return contextMenu;
+}
+
+function editNodeInTable(newName, nodeAddress, rowIndex) {
+    const table = document.getElementById('myTable');
+    const row = table.rows[rowIndex];
+    const nodeNameCell = row.cells[0];
+    nodeNameCell.textContent = newName;
+
+    // Update the node name in storage
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const updatedNodes = nodes.map((node, index) => {
+        if (index === rowIndex) {
+            return { nodeName: newName, nodeAddress };
+        }
+        return node;
+    });
+
+    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadNodesData();
-
-    const addNodeBtn = document.getElementById('add-node');
-    addNodeBtn.addEventListener('click', async () => {
-        // ... (your existing code)
-    });
-
-    window.addEventListener('resize', () => {
-        // ... (your existing code)
-    });
+    // ... (existing code)
 
     const table = document.getElementById('myTable');
-    const contextMenu = document.getElementById('context-menu');
-
-    table.addEventListener('mouseover', (event) => {
-        // ... (your existing code)
-    });
-
-    table.addEventListener('mouseout', (event) => {
-        // ... (your existing code)
-    });
 
     table.addEventListener('contextmenu', (event) => {
         event.preventDefault();
-
         const target = event.target;
-        const contextMenuItems = [
-            { label: 'Change Name', action: () => changeName(target) },
-            { label: 'Change Address', action: () => changeAddress(target) }
-        ];
+        if (target.tagName === 'TD') {
+            const rowIndex = target.parentNode.rowIndex;
+            const nodeName = table.rows[rowIndex].cells[0].textContent;
+            const nodeAddress = table.rows[rowIndex].cells[1].textContent;
+            const contextMenu = createContextMenu(nodeName, nodeAddress, rowIndex);
 
-        showContextMenu(contextMenuItems, event.clientX, event.clientY);
+            const posX = event.clientX + window.scrollX;
+            const posY = event.clientY + window.scrollY;
+
+            contextMenu.style.left = `${posX}px`;
+            contextMenu.style.top = `${posY}px`;
+
+            window.addEventListener('click', () => {
+                document.body.removeChild(contextMenu);
+            }, { once: true });
+        }
     });
-
-    function showContextMenu(items, x, y) {
-        contextMenu.innerHTML = '';
-
-        items.forEach((item) => {
-            const menuItem = document.createElement('div');
-            menuItem.textContent = item.label;
-            menuItem.addEventListener('click', () => {
-                item.action();
-                hideContextMenu();
-            });
-            contextMenu.appendChild(menuItem);
-        });
-
-        contextMenu.style.top = `${y}px`;
-        contextMenu.style.left = `${x}px`;
-        contextMenu.style.display = 'block';
-    }
-
-    function hideContextMenu() {
-        contextMenu.style.display = 'none';
-    }
-
-    function changeName(target) {
-        // Implement logic to change the name
-        const nodeName = prompt('Enter the new name:');
-        if (nodeName !== null) {
-            // Modify the node in the table
-            // ...
-        }
-    }
-
-    function changeAddress(target) {
-        // Implement logic to change the address
-        const nodeAddress = prompt('Enter the new address:');
-        if (nodeAddress !== null) {
-            // Modify the node in the table
-            // ...
-        }
-    }
 });
 
-// ... (your existing code)
-
+// ... (remaining code)
