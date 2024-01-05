@@ -72,6 +72,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
     newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -81,94 +82,91 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         }
     });
 
-    const cell = newRow.cells[2];
-
-    async function updateCellWithTransactionTime() {
-        const response = await fetchTransactions({ nodeName, nodeAddress });
-
-        if (!response) {
-            await new Promise(resolve => setTimeout(resolve, 2500));
-            const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-            if (retryResponse) {
-                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
-                stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
-                    newRow.classList.add('red-text');
-                }
-            } else {
-                cell.textContent = 'Retrying';
-                stopProgressAnimation(progressInterval);
-
-                await new Promise(resolve => setTimeout(resolve, 2500));
-                const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
-                if (secondRetryResponse) {
-                    cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
-                    stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
-                        newRow.classList.add('red-text');
-                    }
-                } else {
-                    cell.textContent = 'Network Fail';
-                    stopProgressAnimation(progressInterval);
-                }
-            }
-        } else {
-            cell.textContent = response.lastTransactionTime || 'Last Hour';
-            stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-                newRow.classList.add('red-text');
-            }
-        }
+    for (let i = 0; i < newRow.cells.length; i++) {
+        const cell = newRow.cells[i];
+        cell.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            showContextMenu(event, nodeName, nodeAddress, cell);
+        });
     }
 
-    const progressInterval = startProgressAnimation(cell);
-    updateCellWithTransactionTime();
-
-    // Right-click context menu
-    newRow.addEventListener('contextmenu', (event) => {
-        event.preventDefault();
-        const menu = [
-            { title: 'Change Node Name', action: () => changeNodeName(nodeAddress) },
-            { title: 'Change Node Address', action: () => changeNodeAddress(nodeName) }
-        ];
-
-        showContextMenu(menu, event.clientX, event.clientY);
-    });
+    const progressInterval = startProgressAnimation(newRow.cells[2]);
+    updateCellWithTransactionTime(newRow, nodeName, nodeAddress, progressInterval);
 }
 
-function showContextMenu(menu, x, y) {
-    const contextMenu = document.createElement('ul');
+function showContextMenu(event, nodeName, nodeAddress, cell) {
+    const contextMenu = document.createElement('div');
     contextMenu.className = 'context-menu';
-    contextMenu.style.left = `${x}px`;
-    contextMenu.style.top = `${y}px`;
 
-    menu.forEach(item => {
-        const menuItem = document.createElement('li');
-        menuItem.textContent = item.title;
-        menuItem.addEventListener('click', item.action);
-        contextMenu.appendChild(menuItem);
+    const changeNameOption = document.createElement('div');
+    changeNameOption.textContent = 'Change Node Name';
+    changeNameOption.addEventListener('click', () => {
+        alert(`Changing node name for ${nodeAddress}`);
     });
+
+    const changeAddressOption = document.createElement('div');
+    changeAddressOption.textContent = 'Change Node Address';
+    changeAddressOption.addEventListener('click', () => {
+        alert(`Changing node address for ${nodeAddress}`);
+    });
+
+    contextMenu.appendChild(changeNameOption);
+    contextMenu.appendChild(changeAddressOption);
+
+    contextMenu.style.top = event.clientY + 'px';
+    contextMenu.style.left = event.clientX + 'px';
 
     document.body.appendChild(contextMenu);
 
     document.addEventListener('click', () => {
         document.body.removeChild(contextMenu);
     });
+
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
 }
 
-function changeNodeName(nodeAddress) {
-    const newName = prompt('Enter new node name:');
-    if (newName !== null) {
-        // Implement logic to change node name
-        console.log(`Changing node name for ${nodeAddress} to ${newName}`);
+async function updateCellWithTransactionTime(row, nodeName, nodeAddress, progressInterval) {
+    const cell = row.cells[2];
+    const response = await fetchTransactions({ nodeName, nodeAddress });
+
+    if (!response) {
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
+        handleRetryResponse(retryResponse, cell, progressInterval, row);
+    } else {
+        cell.textContent = response.lastTransactionTime || 'Last Hour';
+        stopProgressAnimation(progressInterval);
+        handleTransactionTime(response.lastTransactionTime, row);
     }
 }
 
-function changeNodeAddress(nodeName) {
-    const newAddress = prompt('Enter new node address:');
-    if (newAddress !== null) {
-        // Implement logic to change node address
-        console.log(`Changing node address for ${nodeName} to ${newAddress}`);
+async function handleRetryResponse(response, cell, progressInterval, row) {
+    if (response) {
+        cell.textContent = response.lastTransactionTime || 'Last Hour';
+        stopProgressAnimation(progressInterval);
+        handleTransactionTime(response.lastTransactionTime, row);
+    } else {
+        cell.textContent = 'Retrying';
+        stopProgressAnimation(progressInterval);
+
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
+        if (secondRetryResponse) {
+            cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
+            stopProgressAnimation(progressInterval);
+            handleTransactionTime(secondRetryResponse.lastTransactionTime, row);
+        } else {
+            cell.textContent = 'No Response';
+            stopProgressAnimation(progressInterval);
+        }
+    }
+}
+
+function handleTransactionTime(lastTransactionTime, row) {
+    if (typeof lastTransactionTime === 'number' && lastTransactionTime > 24) {
+        row.classList.add('red-text');
     }
 }
 
@@ -237,9 +235,7 @@ async function loadNodesData() {
                     stopProgressAnimation(progressInterval);
                 }, 1000);
 
-                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-                    row.classList.add('red-text');
-                }
+                handleTransactionTime(response.lastTransactionTime, row);
             }
         } catch (error) {
             console.error(`Error fetching data for ${nodeAddress}: ${error}`);
