@@ -72,6 +72,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
     newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -89,9 +90,11 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         if (!response) {
             await new Promise(resolve => setTimeout(resolve, 3000));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
+            
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
+
                 if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
                     newRow.classList.add('red-text');
                 }
@@ -101,9 +104,11 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
+
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
+
                     if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
                         newRow.classList.add('red-text');
                     }
@@ -115,6 +120,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
+
             if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                 newRow.classList.add('red-text');
             }
@@ -149,26 +155,6 @@ function deleteNodeFromStorage(nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(updatedNodes));
 }
 
-async function saveChanges(row) {
-    const nodeName = row.cells[0].textContent;
-    const nodeAddress = row.cells[1].querySelector('a').textContent;
-
-    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
-        alert('Please complete both fields!');
-        return;
-    }
-
-    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
-    const existingIndex = nodes.findIndex((node) => node.nodeAddress === nodeAddress);
-
-    if (existingIndex !== -1) {
-        // Update existing node
-        nodes[existingIndex] = { nodeName, nodeAddress };
-    }
-
-    localStorage.setItem('nodes', JSON.stringify(nodes));
-}
-
 function addNodeToDatabase(nodeName, nodeAddress) {
     if (nodeName.trim() === '' || nodeAddress.trim() === '') {
         alert('Please complete both fields!');
@@ -199,6 +185,7 @@ async function loadNodesData() {
     await Promise.all(storedNodes.map(async ({ nodeName, nodeAddress }) => {
         try {
             const response = await fetchTransactions({ nodeName, nodeAddress });
+
             if (response) {
                 const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
                 const row = table.querySelector(`tr td:nth-child(2) a[href="https://blockexplorer.bloxberg.org/address/${nodeAddress}"]`).parentNode.parentNode;
