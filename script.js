@@ -71,7 +71,24 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    newRow.innerHTML = `<td class="edit-node">${nodeName}</td><td class="edit-node" data-address="${nodeAddress}"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+
+    const editNodes = newRow.querySelectorAll('.edit-node');
+    editNodes.forEach((editNode) => {
+        editNode.addEventListener('click', () => {
+            const newValue = prompt('Enter new value:', editNode.textContent);
+            if (newValue !== null && newValue !== "") {
+                if (editNode.dataset.address) {
+                    editNode.dataset.address = newValue;
+                    editNode.querySelector('a').textContent = generateNewNodeAddressText(newValue);
+                } else {
+                    editNode.textContent = newValue;
+                }
+                updateNodeInStorage(nodeAddress, newValue);
+            }
+        });
+    });
+
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -300,71 +317,4 @@ document.addEventListener('DOMContentLoaded', () => {
             target.parentNode.classList.remove('highlight');
         }
     });
-
-                          // ... (existing code)
-
-function createContextMenu(nodeName, nodeAddress, rowIndex) {
-    const contextMenu = document.createElement('div');
-    contextMenu.className = 'context-menu';
-    contextMenu.innerHTML = `<div class="context-menu-item" id="edit-node">Edit Node</div>`;
-
-    document.body.appendChild(contextMenu);
-
-    const editNodeMenuItem = document.getElementById('edit-node');
-    editNodeMenuItem.addEventListener('click', () => {
-        const newName = prompt('Enter new name for the node:', nodeName);
-        if (newName !== null) {
-            editNodeInTable(newName, nodeAddress, rowIndex);
-        }
-        document.body.removeChild(contextMenu);
-    });
-
-    return contextMenu;
-}
-
-function editNodeInTable(newName, nodeAddress, rowIndex) {
-    const table = document.getElementById('myTable');
-    const row = table.rows[rowIndex];
-    const nodeNameCell = row.cells[0];
-    nodeNameCell.textContent = newName;
-
-    // Update the node name in storage
-    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
-    const updatedNodes = nodes.map((node, index) => {
-        if (index === rowIndex) {
-            return { nodeName: newName, nodeAddress };
-        }
-        return node;
-    });
-
-    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    // ... (existing code)
-
-    const table = document.getElementById('myTable');
-
-    table.addEventListener('contextmenu', (event) => {
-        event.preventDefault();
-        const target = event.target;
-        if (target.tagName === 'TD') {
-            const rowIndex = target.parentNode.rowIndex;
-            const nodeName = table.rows[rowIndex].cells[0].textContent;
-            const nodeAddress = table.rows[rowIndex].cells[1].textContent;
-            const contextMenu = createContextMenu(nodeName, nodeAddress, rowIndex);
-
-            const posX = event.clientX + window.scrollX;
-            const posY = event.clientY + window.scrollY;
-
-            contextMenu.style.left = `${posX}px`;
-            contextMenu.style.top = `${posY}px`;
-
-            window.addEventListener('click', () => {
-                document.body.removeChild(contextMenu);
-            }, { once: true });
-        }
-    });
 });
-
-// ... (remaining code)
