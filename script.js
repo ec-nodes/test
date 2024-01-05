@@ -300,46 +300,4 @@ document.addEventListener('DOMContentLoaded', () => {
             target.parentNode.classList.remove('highlight');
         }
     });
-
-    table.addEventListener('contextmenu', (event) => {
-        event.preventDefault();
-        const target = event.target;
-
-        if (target.tagName === 'TD') {
-            const contextMenu = document.createElement('div');
-            contextMenu.classList.add('context-menu');
-            contextMenu.innerHTML = `<div class="context-option" data-action="changeName">Change Name</div>
-                                     <div class="context-option" data-action="changeAddress">Change Address</div>`;
-            document.body.appendChild(contextMenu);
-
-            contextMenu.style.left = `${event.clientX}px`;
-            contextMenu.style.top = `${event.clientY}px`;
-
-            contextMenu.currentTd = target;
-
-            contextMenu.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                const td = contextMenu.currentTd;
-
-                if (action === 'changeName') {
-                    const newName = prompt('Enter new name:');
-                    if (newName !== null) {
-                        td.textContent = newName;
-                    }
-                } else if (action === 'changeAddress') {
-                    const newAddress = prompt('Enter new address:');
-                    if (newAddress !== null) {
-                        td.querySelector('a').href = `https://blockexplorer.bloxberg.org/address/${newAddress}`;
-                        td.querySelector('a').textContent = generateNewNodeAddressText(newAddress);
-                    }
-                }
-
-                contextMenu.remove();
-            });
-
-            document.addEventListener('click', () => {
-                contextMenu.remove();
-            });
-        }
-    });
 });
