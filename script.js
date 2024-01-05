@@ -301,59 +301,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Add context menu on right-click for each row
     table.addEventListener('contextmenu', (event) => {
         event.preventDefault();
         const target = event.target;
+
         if (target.tagName === 'TD') {
-            const isEmptyCell = target.textContent.trim() === '';
-            if (!isEmptyCell) {
-                showContextMenu(event.clientX, event.clientY, target.parentNode);
-            }
+            const contextMenu = document.createElement('div');
+            contextMenu.classList.add('context-menu');
+            contextMenu.innerHTML = `<div class="context-option" data-action="changeName">Change Name</div>
+                                     <div class="context-option" data-action="changeAddress">Change Address</div>`;
+            document.body.appendChild(contextMenu);
+
+            contextMenu.style.left = `${event.clientX}px`;
+            contextMenu.style.top = `${event.clientY}px`;
+
+            contextMenu.currentTd = target;
+
+            contextMenu.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                const td = contextMenu.currentTd;
+
+                if (action === 'changeName') {
+                    const newName = prompt('Enter new name:');
+                    if (newName !== null) {
+                        td.textContent = newName;
+                    }
+                } else if (action === 'changeAddress') {
+                    const newAddress = prompt('Enter new address:');
+                    if (newAddress !== null) {
+                        td.querySelector('a').href = `https://blockexplorer.bloxberg.org/address/${newAddress}`;
+                        td.querySelector('a').textContent = generateNewNodeAddressText(newAddress);
+                    }
+                }
+
+                contextMenu.remove();
+            });
+
+            document.addEventListener('click', () => {
+                contextMenu.remove();
+            });
         }
     });
 });
-
-function showContextMenu(x, y, targetRow) {
-    const contextMenu = document.createElement('div');
-    contextMenu.className = 'context-menu';
-
-    const changeNameOption = document.createElement('div');
-    changeNameOption.textContent = 'Change Node Name';
-    changeNameOption.addEventListener('click', () => {
-        const newName = prompt('Enter new node name:');
-        if (newName !== null) {
-            targetRow.cells[0].textContent = newName;
-        }
-        closeContextMenu();
-    });
-
-    const changeAddressOption = document.createElement('div');
-    changeAddressOption.textContent = 'Change Node Address';
-    changeAddressOption.addEventListener('click', () => {
-        const newAddress = prompt('Enter new node address:');
-        if (newAddress !== null) {
-            targetRow.cells[1].textContent = newAddress;
-        }
-        closeContextMenu();
-    });
-
-    contextMenu.appendChild(changeNameOption);
-    contextMenu.appendChild(changeAddressOption);
-
-    document.body.appendChild(contextMenu);
-
-    // Position the context menu at the clicked position
-    contextMenu.style.left = x + 'px';
-    contextMenu.style.top = y + 'px';
-
-    // Close the context menu on click outside
-    document.addEventListener('click', closeContextMenu);
-}
-
-function closeContextMenu() {
-    const contextMenu = document.querySelector('.context-menu');
-    if (contextMenu) {
-        contextMenu.parentNode.removeChild(contextMenu);
-    }
-}
