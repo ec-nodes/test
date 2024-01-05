@@ -345,7 +345,7 @@ function showContextMenu(x, y, targetRow) {
 
     document.body.appendChild(contextMenu);
 
-    // Position the context menu
+    // Position the context menu at the clicked position
     contextMenu.style.left = x + 'px';
     contextMenu.style.top = y + 'px';
 
