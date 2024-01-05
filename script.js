@@ -309,54 +309,83 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+// ... (your existing code)
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadNodesData();
+
+    const addNodeBtn = document.getElementById('add-node');
+    addNodeBtn.addEventListener('click', async () => {
+        // ... (your existing code)
+    });
+
+    window.addEventListener('resize', () => {
+        // ... (your existing code)
+    });
+
     const table = document.getElementById('myTable');
+    const contextMenu = document.getElementById('context-menu');
+
+    table.addEventListener('mouseover', (event) => {
+        // ... (your existing code)
+    });
+
+    table.addEventListener('mouseout', (event) => {
+        // ... (your existing code)
+    });
 
     table.addEventListener('contextmenu', (event) => {
         event.preventDefault();
 
         const target = event.target;
-        if (target.tagName === 'TD') {
-            const row = target.parentNode;
-            const nodeAddress = row.querySelector('td:nth-child(2) a').getAttribute('href').split('/').pop();
-            
-            const contextMenu = document.createElement('div');
-            contextMenu.className = 'context-menu';
-            contextMenu.innerHTML = `
-                <div class="context-menu-item" id="change-name">Change Name</div>
-                <div class="context-menu-item" id="change-address">Change Address</div>
-            `;
-            document.body.appendChild(contextMenu);
+        const contextMenuItems = [
+            { label: 'Change Name', action: () => changeName(target) },
+            { label: 'Change Address', action: () => changeAddress(target) }
+        ];
 
-            contextMenu.style.left = `${event.clientX}px`;
-            contextMenu.style.top = `${event.clientY}px`;
-
-            const changeNameOption = document.getElementById('change-name');
-            const changeAddressOption = document.getElementById('change-address');
-
-            changeNameOption.addEventListener('click', () => {
-                const newName = prompt('Enter new name:');
-                if (newName !== null) {
-                    // Update the name in the table
-                    row.querySelector('td:first-child').textContent = newName;
-                    // TODO: Save the changes to storage
-                }
-                document.body.removeChild(contextMenu);
-            });
-
-            changeAddressOption.addEventListener('click', () => {
-                const newAddress = prompt('Enter new address:');
-                if (newAddress !== null) {
-                    // Update the address in the table
-                    row.querySelector('td:nth-child(2) a').textContent = generateNewNodeAddressText(newAddress);
-                    // TODO: Save the changes to storage
-                }
-                document.body.removeChild(contextMenu);
-            });
-
-            document.addEventListener('click', () => {
-                document.body.removeChild(contextMenu);
-            }, { once: true });
-        }
+        showContextMenu(contextMenuItems, event.clientX, event.clientY);
     });
+
+    function showContextMenu(items, x, y) {
+        contextMenu.innerHTML = '';
+
+        items.forEach((item) => {
+            const menuItem = document.createElement('div');
+            menuItem.textContent = item.label;
+            menuItem.addEventListener('click', () => {
+                item.action();
+                hideContextMenu();
+            });
+            contextMenu.appendChild(menuItem);
+        });
+
+        contextMenu.style.top = `${y}px`;
+        contextMenu.style.left = `${x}px`;
+        contextMenu.style.display = 'block';
+    }
+
+    function hideContextMenu() {
+        contextMenu.style.display = 'none';
+    }
+
+    function changeName(target) {
+        // Implement logic to change the name
+        const nodeName = prompt('Enter the new name:');
+        if (nodeName !== null) {
+            // Modify the node in the table
+            // ...
+        }
+    }
+
+    function changeAddress(target) {
+        // Implement logic to change the address
+        const nodeAddress = prompt('Enter the new address:');
+        if (nodeAddress !== null) {
+            // Modify the node in the table
+            // ...
+        }
+    }
 });
+
+// ... (your existing code)
+
