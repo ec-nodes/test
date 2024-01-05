@@ -123,6 +123,53 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const progressInterval = startProgressAnimation(cell);
     updateCellWithTransactionTime();
+
+    // Right-click context menu
+    newRow.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        const menu = [
+            { title: 'Change Node Name', action: () => changeNodeName(nodeAddress) },
+            { title: 'Change Node Address', action: () => changeNodeAddress(nodeName) }
+        ];
+
+        showContextMenu(menu, event.clientX, event.clientY);
+    });
+}
+
+function showContextMenu(menu, x, y) {
+    const contextMenu = document.createElement('ul');
+    contextMenu.className = 'context-menu';
+    contextMenu.style.left = `${x}px`;
+    contextMenu.style.top = `${y}px`;
+
+    menu.forEach(item => {
+        const menuItem = document.createElement('li');
+        menuItem.textContent = item.title;
+        menuItem.addEventListener('click', item.action);
+        contextMenu.appendChild(menuItem);
+    });
+
+    document.body.appendChild(contextMenu);
+
+    document.addEventListener('click', () => {
+        document.body.removeChild(contextMenu);
+    });
+}
+
+function changeNodeName(nodeAddress) {
+    const newName = prompt('Enter new node name:');
+    if (newName !== null) {
+        // Implement logic to change node name
+        console.log(`Changing node name for ${nodeAddress} to ${newName}`);
+    }
+}
+
+function changeNodeAddress(nodeName) {
+    const newAddress = prompt('Enter new node address:');
+    if (newAddress !== null) {
+        // Implement logic to change node address
+        console.log(`Changing node address for ${nodeName} to ${newAddress}`);
+    }
 }
 
 const nodeNameInput = document.getElementById('node-name');
