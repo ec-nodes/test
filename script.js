@@ -178,6 +178,17 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
+function updateNodeInStorage(oldNodeAddress, newNodeValue) {
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const updatedNodes = nodes.map((node) => {
+        if (node.nodeAddress === oldNodeAddress) {
+            return { ...node, nodeName: newNodeValue };
+        }
+        return node;
+    });
+    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
+}
+
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const table = document.getElementById('myTable');
@@ -220,48 +231,38 @@ async function loadNodesData() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadNodesData();
 
-function updateNodeInStorage(oldNodeAddress, newNodeValue, isAddress) {
-    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
-    const updatedNodes = nodes.map((node) => {
-        if (node.nodeAddress === oldNodeAddress) {
-            return isAddress ? { ...node, nodeAddress: newNodeValue } : { ...node, nodeName: newNodeValue };
-        }
-        return node;
-    });
-    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
-}
-
     const addNodeBtn = document.getElementById('add-node');
     addNodeBtn.addEventListener('click', async () => {
-    const nodeName = document.getElementById('node-name').value;
-    const nodeAddress = document.getElementById('node-address').value;
+        const nodeName = document.getElementById('node-name').value;
+        const nodeAddress = document.getElementById('node-address').value;
 
-    if (nodeName.trim() === '' || nodeAddress.trim() === '') {
-        alert('Please complete both fields!');
-        return;
-    }
+        if (nodeName.trim() === '' || nodeAddress.trim() === '') {
+            alert('Please complete both fields!');
+            return;
+        }
 
-    if (existingAddresses.has(nodeAddress)) {
-        alert('This address already exists!');
-        return;
-    }
+        if (existingAddresses.has(nodeAddress)) {
+            alert('This address already exists!');
+            return;
+        }
 
-    addNodeBtn.classList.add('clicked');
-    setTimeout(() => {
-        addNodeBtn.classList.remove('clicked');
-    }, 120);
+        addNodeBtn.classList.add('clicked');
+        setTimeout(() => {
+            addNodeBtn.classList.remove('clicked');
+        }, 120);
 
-    const nodeData = await fetchTransactions({ nodeName, nodeAddress });
-    if (nodeData) {
-        addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
-        addNodeToDatabase(nodeName, nodeAddress);
-        document.getElementById('node-name').value = '';
-        document.getElementById('node-address').value = '';
-        existingAddresses.add(nodeAddress);
+        const nodeData = await fetchTransactions({ nodeName, nodeAddress });
+        if (nodeData) {
+            addNodeToTable(nodeName, nodeAddress, nodeData.lastTransactionTime || 'Last Hour');
+            addNodeToDatabase(nodeName, nodeAddress);
+            document.getElementById('node-name').value = '';
+            document.getElementById('node-address').value = '';
+            existingAddresses.add(nodeAddress);
 
-        updateNodeInStorage(nodeAddress, nodeName, false);
-        updateNodeInStorage(nodeAddress, nodeAddress, true);
-    }
+            // Adaugă această linie pentru a actualiza noile date în stocarea locală
+            updateNodeInStorage(nodeAddress, nodeName);
+        }
+    });
 });
 
 window.addEventListener('resize', () => {
