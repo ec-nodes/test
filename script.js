@@ -71,27 +71,20 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td class="edit-node" data-name="${nodeName}">${nodeName}</td><td class="edit-node" data-address="${nodeAddress}"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    newRow.innerHTML = `<td class="edit-node">${nodeName}</td><td class="edit-node" data-address="${nodeAddress}"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
 
     const editNodes = newRow.querySelectorAll('.edit-node');
     editNodes.forEach((editNode) => {
         editNode.addEventListener('click', () => {
-            const isAddress = editNode.dataset.address !== undefined;
-            const promptMessage = isAddress ? 'Enter new address:' : 'Enter new name:';
-            const currentValue = isAddress ? editNode.dataset.address : editNode.dataset.name;
-            
-            const newValue = prompt(promptMessage, currentValue);
-            
+            const newValue = prompt('Enter new value:', editNode.textContent);
             if (newValue !== null && newValue !== "") {
-                if (isAddress) {
+                if (editNode.dataset.address) {
                     editNode.dataset.address = newValue;
                     editNode.querySelector('a').textContent = generateNewNodeAddressText(newValue);
                 } else {
-                    editNode.dataset.name = newValue;
                     editNode.textContent = newValue;
                 }
-                updateNodeInStorage(nodeAddress, newValue, isAddress);
-		updateNodeInStorage(nodeAddress, nodeAddress, true);
+                updateNodeInStorage(nodeAddress, newValue);
             }
         });
     });
@@ -266,8 +259,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('node-address').value = '';
             existingAddresses.add(nodeAddress);
 
-            // Adaugă această linie pentru a actualiza noile date în stocarea locală
-            updateNodeInStorage(nodeAddress, nodeName);
+        updateNodeInStorage(nodeAddress, nodeName, true);
+        updateNodeInStorage(nodeAddress, nodeAddress, true);
         }
     });
 });
