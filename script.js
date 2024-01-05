@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('node-address').value = '';
             existingAddresses.add(nodeAddress);
 
-        updateNodeInStorage(nodeName, nodeName, true);
+        updateNodeInStorage(nodeAddress, nodeName, false);
         updateNodeInStorage(nodeAddress, nodeAddress, true);
         }
     });
