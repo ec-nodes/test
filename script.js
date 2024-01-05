@@ -287,19 +287,36 @@ restoreBackupBtn.addEventListener('click', restoreBackup);
 document.addEventListener('DOMContentLoaded', () => {
     const table = document.getElementById('myTable');
 
+    // Add mouseover highlighting to each row
+    table.addEventListener('mouseover', (event) => {
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            target.parentNode.classList.add('highlight');
+        }
+    });
+
+    // Remove mouseover highlighting when mouse leaves the row
+    table.addEventListener('mouseout', (event) => {
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            target.parentNode.classList.remove('highlight');
+        }
+    });
+
+    // Add context menu on right-click for each row
     table.addEventListener('contextmenu', (event) => {
         event.preventDefault();
         const target = event.target;
         if (target.tagName === 'TD') {
             const isEmptyCell = target.textContent.trim() === '';
-            if (isEmptyCell) {
-                showContextMenu(event.clientX, event.clientY, target);
+            if (!isEmptyCell) {
+                showContextMenu(event.clientX, event.clientY, target.parentNode);
             }
         }
     });
 });
 
-function showContextMenu(x, y, targetCell) {
+function showContextMenu(x, y, targetRow) {
     const contextMenu = document.createElement('div');
     contextMenu.className = 'context-menu';
 
@@ -308,7 +325,7 @@ function showContextMenu(x, y, targetCell) {
     changeNameOption.addEventListener('click', () => {
         const newName = prompt('Enter new node name:');
         if (newName !== null) {
-            targetCell.textContent = newName;
+            targetRow.cells[0].textContent = newName;
         }
         closeContextMenu();
     });
@@ -318,7 +335,7 @@ function showContextMenu(x, y, targetCell) {
     changeAddressOption.addEventListener('click', () => {
         const newAddress = prompt('Enter new node address:');
         if (newAddress !== null) {
-            targetCell.textContent = newAddress;
+            targetRow.cells[1].textContent = newAddress;
         }
         closeContextMenu();
     });
@@ -328,9 +345,11 @@ function showContextMenu(x, y, targetCell) {
 
     document.body.appendChild(contextMenu);
 
+    // Position the context menu
     contextMenu.style.left = x + 'px';
     contextMenu.style.top = y + 'px';
 
+    // Close the context menu on click outside
     document.addEventListener('click', closeContextMenu);
 }
 
