@@ -72,7 +72,6 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
     newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
-
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -82,92 +81,48 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         }
     });
 
-    for (let i = 0; i < newRow.cells.length; i++) {
-        const cell = newRow.cells[i];
-        cell.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
-            showContextMenu(event, nodeName, nodeAddress, cell);
-        });
-    }
+    const cell = newRow.cells[2];
 
-    const progressInterval = startProgressAnimation(newRow.cells[2]);
-    updateCellWithTransactionTime(newRow, nodeName, nodeAddress, progressInterval);
-}
+    async function updateCellWithTransactionTime() {
+        const response = await fetchTransactions({ nodeName, nodeAddress });
 
-function showContextMenu(event, nodeName, nodeAddress, cell) {
-    const contextMenu = document.createElement('div');
-    contextMenu.className = 'context-menu';
+        if (!response) {
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
+            if (retryResponse) {
+                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
+                stopProgressAnimation(progressInterval);
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
+                    newRow.classList.add('red-text');
+                }
+            } else {
+                cell.textContent = 'Retrying';
+                stopProgressAnimation(progressInterval);
 
-    const changeNameOption = document.createElement('div');
-    changeNameOption.textContent = 'Change Node Name';
-    changeNameOption.addEventListener('click', () => {
-        alert(`Changing node name for ${nodeAddress}`);
-    });
-
-    const changeAddressOption = document.createElement('div');
-    changeAddressOption.textContent = 'Change Node Address';
-    changeAddressOption.addEventListener('click', () => {
-        alert(`Changing node address for ${nodeAddress}`);
-    });
-
-    contextMenu.appendChild(changeNameOption);
-    contextMenu.appendChild(changeAddressOption);
-
-    contextMenu.style.top = event.clientY + 'px';
-    contextMenu.style.left = event.clientX + 'px';
-
-    document.body.appendChild(contextMenu);
-
-    document.addEventListener('click', () => {
-        document.body.removeChild(contextMenu);
-    });
-
-    document.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-    });
-}
-
-async function updateCellWithTransactionTime(row, nodeName, nodeAddress, progressInterval) {
-    const cell = row.cells[2];
-    const response = await fetchTransactions({ nodeName, nodeAddress });
-
-    if (!response) {
-        await new Promise(resolve => setTimeout(resolve, 2500));
-        const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-        handleRetryResponse(retryResponse, cell, progressInterval, row);
-    } else {
-        cell.textContent = response.lastTransactionTime || 'Last Hour';
-        stopProgressAnimation(progressInterval);
-        handleTransactionTime(response.lastTransactionTime, row);
-    }
-}
-
-async function handleRetryResponse(response, cell, progressInterval, row) {
-    if (response) {
-        cell.textContent = response.lastTransactionTime || 'Last Hour';
-        stopProgressAnimation(progressInterval);
-        handleTransactionTime(response.lastTransactionTime, row);
-    } else {
-        cell.textContent = 'Retrying';
-        stopProgressAnimation(progressInterval);
-
-        await new Promise(resolve => setTimeout(resolve, 2500));
-        const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
-        if (secondRetryResponse) {
-            cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
-            stopProgressAnimation(progressInterval);
-            handleTransactionTime(secondRetryResponse.lastTransactionTime, row);
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
+                if (secondRetryResponse) {
+                    cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
+                    stopProgressAnimation(progressInterval);
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                        newRow.classList.add('red-text');
+                    }
+                } else {
+                    cell.textContent = 'No Response';
+                    stopProgressAnimation(progressInterval);
+                }
+            }
         } else {
-            cell.textContent = 'No Response';
+            cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                newRow.classList.add('red-text');
+            }
         }
     }
-}
 
-function handleTransactionTime(lastTransactionTime, row) {
-    if (typeof lastTransactionTime === 'number' && lastTransactionTime > 24) {
-        row.classList.add('red-text');
-    }
+    const progressInterval = startProgressAnimation(cell);
+    updateCellWithTransactionTime();
 }
 
 const nodeNameInput = document.getElementById('node-name');
@@ -235,7 +190,9 @@ async function loadNodesData() {
                     stopProgressAnimation(progressInterval);
                 }, 1000);
 
-                handleTransactionTime(response.lastTransactionTime, row);
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                    row.classList.add('red-text');
+                }
             }
         } catch (error) {
             console.error(`Error fetching data for ${nodeAddress}: ${error}`);
@@ -326,3 +283,74 @@ downloadBackupBtn.addEventListener('click', downloadBackupJSON);
 
 const restoreBackupBtn = document.getElementById('restore-backup');
 restoreBackupBtn.addEventListener('click', restoreBackup);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const table = document.getElementById('myTable');
+
+    table.addEventListener('mouseover', (event) => {
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            target.parentNode.classList.add('highlight');
+        }
+    });
+
+    table.addEventListener('mouseout', (event) => {
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            target.parentNode.classList.remove('highlight');
+        }
+    });
+
+    table.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            const isEmptyCell = target.textContent.trim() === '';
+            if (isEmptyCell) {
+                showContextMenu(event.clientX, event.clientY, target);
+            }
+        }
+    });
+});
+
+function showContextMenu(x, y, targetCell) {
+    const contextMenu = document.createElement('div');
+    contextMenu.className = 'context-menu';
+
+    const changeNameOption = document.createElement('div');
+    changeNameOption.textContent = 'Change Node Name';
+    changeNameOption.addEventListener('click', () => {
+        const newName = prompt('Enter new node name:');
+        if (newName !== null) {
+            targetCell.textContent = newName;
+        }
+        closeContextMenu();
+    });
+
+    const changeAddressOption = document.createElement('div');
+    changeAddressOption.textContent = 'Change Node Address';
+    changeAddressOption.addEventListener('click', () => {
+        const newAddress = prompt('Enter new node address:');
+        if (newAddress !== null) {
+            targetCell.textContent = newAddress;
+        }
+        closeContextMenu();
+    });
+
+    contextMenu.appendChild(changeNameOption);
+    contextMenu.appendChild(changeAddressOption);
+
+    document.body.appendChild(contextMenu);
+
+    contextMenu.style.left = x + 'px';
+    contextMenu.style.top = y + 'px';
+
+    document.addEventListener('click', closeContextMenu);
+}
+
+function closeContextMenu() {
+    const contextMenu = document.querySelector('.context-menu');
+    if (contextMenu) {
+        contextMenu.parentNode.removeChild(contextMenu);
+    }
+}
