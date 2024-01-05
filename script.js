@@ -16,7 +16,7 @@ function stopProgressAnimation(progressInterval) {
 }
 
 async function retryFetchTransactions(node) {
-    const maxRetries = 3;
+    const maxRetries = 2;
     let retryCount = 0;
 
     while (retryCount < maxRetries) {
@@ -33,7 +33,7 @@ async function retryFetchTransactions(node) {
             console.log(`Error fetching data for ${node.nodeAddress}: ${error}`);
         } finally {
             retryCount++;
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            await new Promise(resolve => setTimeout(resolve, 3000));
         }
     }
 
@@ -87,7 +87,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         const response = await fetchTransactions({ nodeName, nodeAddress });
 
         if (!response) {
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            await new Promise(resolve => setTimeout(resolve, 3000));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
@@ -99,7 +99,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 cell.textContent = 'Retrying';
                 stopProgressAnimation(progressInterval);
 
-                await new Promise(resolve => setTimeout(resolve, 2500));
+                await new Promise(resolve => setTimeout(resolve, 3000));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
@@ -287,7 +287,6 @@ restoreBackupBtn.addEventListener('click', restoreBackup);
 document.addEventListener('DOMContentLoaded', () => {
     const table = document.getElementById('myTable');
 
-    // Add mouseover highlighting to each row
     table.addEventListener('mouseover', (event) => {
         const target = event.target;
         if (target.tagName === 'TD') {
@@ -295,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Remove mouseover highlighting when mouse leaves the row
     table.addEventListener('mouseout', (event) => {
         const target = event.target;
         if (target.tagName === 'TD') {
