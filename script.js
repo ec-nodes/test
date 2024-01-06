@@ -1,13 +1,17 @@
 const existingAddresses = new Set();
 const pendingAddresses = new Set();
 
+const PROGRESS_INTERVAL = 300;
+const MAX_RETRIES = 3;
+const RETRY_INTERVAL = 2500;
+
 function startProgressAnimation(cell) {
     let progress = 1;
     const progressText = [".", "..", "..."];
     const progressInterval = setInterval(() => {
         cell.textContent = progressText[progress % 4];
         progress++;
-    }, 300);
+    }, PROGRESS_INTERVAL);
     return progressInterval;
 }
 
@@ -16,10 +20,9 @@ function stopProgressAnimation(progressInterval) {
 }
 
 async function retryFetchTransactions(node) {
-    const maxRetries = 3;
     let retryCount = 0;
 
-    while (retryCount < maxRetries) {
+    while (retryCount < MAX_RETRIES) {
         try {
             const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
             const json = await response.json();
@@ -33,7 +36,7 @@ async function retryFetchTransactions(node) {
             console.log(`Error fetching data for ${node.nodeAddress}: ${error}`);
         } finally {
             retryCount++;
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
         }
     }
 
@@ -72,6 +75,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
     newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -87,7 +91,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         const response = await fetchTransactions({ nodeName, nodeAddress });
 
         if (!response) {
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
@@ -99,7 +103,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 cell.textContent = 'Retrying';
                 stopProgressAnimation(progressInterval);
 
-                await new Promise(resolve => setTimeout(resolve, 2500));
+                await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
@@ -188,14 +192,14 @@ async function loadNodesData() {
                 setTimeout(() => {
                     cell.textContent = response.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                }, 1000);
+                }, RETRY_INTERVAL);
 
                 if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                     row.classList.add('red-text');
                 }
             }
         } catch (error) {
-            console.error(`Error fetching data for ${nodeAddress}: ${error}`);
+            console.log(`Error fetching data for ${nodeAddress}: ${error}`);
         }
     }));
 }
