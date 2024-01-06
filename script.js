@@ -16,7 +16,7 @@ function stopProgressAnimation(progressInterval) {
 }
 
 async function retryFetchTransactions(node) {
-    const maxRetries = 2;
+    const maxRetries = 3;
     let retryCount = 0;
 
     while (retryCount < maxRetries) {
@@ -33,7 +33,7 @@ async function retryFetchTransactions(node) {
             console.log(`Error fetching data for ${node.nodeAddress}: ${error}`);
         } finally {
             retryCount++;
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 2500));
         }
     }
 
@@ -71,24 +71,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td class="edit-node">${nodeName}</td><td class="edit-node" data-address="${nodeAddress}"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
-
-    const editNodes = newRow.querySelectorAll('.edit-node');
-    editNodes.forEach((editNode) => {
-        editNode.addEventListener('click', () => {
-            const newValue = prompt('Enter new value:', editNode.textContent);
-            if (newValue !== null && newValue !== "") {
-                if (editNode.dataset.address) {
-                    editNode.dataset.address = newValue;
-                    editNode.querySelector('a').textContent = generateNewNodeAddressText(newValue);
-                } else {
-                    editNode.textContent = newValue;
-                }
-                updateNodeInStorage(nodeAddress, newValue);
-            }
-        });
-    });
-
+    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -104,7 +87,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         const response = await fetchTransactions({ nodeName, nodeAddress });
 
         if (!response) {
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 2500));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
@@ -116,7 +99,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 cell.textContent = 'Retrying';
                 stopProgressAnimation(progressInterval);
 
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                await new Promise(resolve => setTimeout(resolve, 2500));
                 const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
@@ -176,17 +159,6 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     const newNode = { nodeName, nodeAddress };
     nodes.push(newNode);
     localStorage.setItem('nodes', JSON.stringify(nodes));
-}
-
-function updateNodeInStorage(oldNodeAddress, newNodeValue) {
-    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
-    const updatedNodes = nodes.map((node) => {
-        if (node.nodeAddress === oldNodeAddress) {
-            return { ...node, nodeName: newNodeValue };
-        }
-        return node;
-    });
-    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
 }
 
 async function loadNodesData() {
@@ -258,9 +230,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('node-name').value = '';
             document.getElementById('node-address').value = '';
             existingAddresses.add(nodeAddress);
-
-            // Adaugă această linie pentru a actualiza noile date în stocarea locală
-            updateNodeInStorage(nodeAddress, nodeName);
         }
     });
 });
@@ -314,21 +283,3 @@ downloadBackupBtn.addEventListener('click', downloadBackupJSON);
 
 const restoreBackupBtn = document.getElementById('restore-backup');
 restoreBackupBtn.addEventListener('click', restoreBackup);
-
-document.addEventListener('DOMContentLoaded', () => {
-    const table = document.getElementById('myTable');
-
-    table.addEventListener('mouseover', (event) => {
-        const target = event.target;
-        if (target.tagName === 'TD') {
-            target.parentNode.classList.add('highlight');
-        }
-    });
-
-    table.addEventListener('mouseout', (event) => {
-        const target = event.target;
-        if (target.tagName === 'TD') {
-            target.parentNode.classList.remove('highlight');
-        }
-    });
-});
