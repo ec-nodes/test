@@ -283,3 +283,21 @@ downloadBackupBtn.addEventListener('click', downloadBackupJSON);
 
 const restoreBackupBtn = document.getElementById('restore-backup');
 restoreBackupBtn.addEventListener('click', restoreBackup);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const table = document.getElementById('myTable');
+
+    table.addEventListener('mouseover', (event) => {
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            target.parentNode.classList.add('highlight');
+        }
+    });
+
+    table.addEventListener('mouseout', (event) => {
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            target.parentNode.classList.remove('highlight');
+        }
+    });
+});
