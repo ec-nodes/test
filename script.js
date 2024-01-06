@@ -19,6 +19,30 @@ function stopProgressAnimation(progressInterval) {
     clearInterval(progressInterval);
 }
 
+async function retryFetchTransactions(node) {
+    let retryCount = 0;
+
+    while (retryCount < MAX_RETRIES) {
+        try {
+            const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
+            const json = await response.json();
+            const nodeTransactionsArray = json.result;
+
+            if (nodeTransactionsArray.length > 0) {
+                existingAddresses.add(node.nodeAddress);
+                return { ...node, lastTransactionTime: Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600) };
+            }
+        } catch (error) {
+            console.log(`Error fetching data for ${node.nodeAddress}: ${error}`);
+        } finally {
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
+        }
+    }
+
+    return null;
+}
+
 async function fetchTransactions(node) {
     try {
         if (pendingAddresses.has(node.nodeAddress)) {
@@ -27,28 +51,13 @@ async function fetchTransactions(node) {
 
         pendingAddresses.add(node.nodeAddress);
 
-        let retryCount = 0;
+        const response = await retryFetchTransactions(node);
 
-        while (retryCount < MAX_RETRIES) {
-            try {
-                const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
-                const json = await response.json();
-                const nodeTransactionsArray = json.result;
-
-                if (nodeTransactionsArray.length > 0) {
-                    existingAddresses.add(node.nodeAddress);
-                    pendingAddresses.delete(node.nodeAddress);
-                    return { ...node, lastTransactionTime: Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600) };
-                }
-            } catch (error) {
-                console.log(`Error fetching data for ${node.nodeAddress}: ${error}`);
-            } finally {
-                retryCount++;
-                await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
-            }
+        if (response) {
+            pendingAddresses.delete(node.nodeAddress);
         }
 
-        return null;
+        return response;
     } finally {
         pendingAddresses.delete(node.nodeAddress);
     }
@@ -84,28 +93,29 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         if (!response) {
             await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
             const retryResponse = await fetchTransactions({ nodeName, nodeAddress });
-            handleRetryResponse(retryResponse, cell, newRow, transactionTime);
-        } else {
-            handleRetryResponse(response, cell, newRow, transactionTime);
-        }
-    }
+            if (retryResponse) {
+                cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
+                stopProgressAnimation(progressInterval);
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
+                    newRow.classList.add('red-text');
+                }
+            } else {
+                cell.textContent = 'Retrying';
+                stopProgressAnimation(progressInterval);
 
-    const progressInterval = startProgressAnimation(cell);
-    updateCellWithTransactionTime();
-}
-
-function handleRetryResponse(response, cell, newRow, transactionTime) {
-    if (response) {
-        cell.textContent = response.lastTransactionTime || 'Last Hour';
-        stopProgressAnimation(progressInterval);
-        if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
-            newRow.classList.add('red-text');
-        }
-    } else {
-        cell.textContent = 'No Response';
-        stopProgressAnimation(progressInterval);
-    }
-}
+                await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
+                const secondRetryResponse = await fetchTransactions({ nodeName, nodeAddress });
+                if (secondRetryResponse) {
+                    cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
+                    stopProgressAnimation(progressInterval);
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                        newRow.classList.add('red-text');
+                    }
+                } else {
+                    cell.textContent = 'No Response';
+                    stopProgressAnimation(progressInterval);
+                }
+            }
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
