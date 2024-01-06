@@ -71,7 +71,24 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
 
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    newRow.innerHTML = `<td class="edit-node">${nodeName}</td><td class="edit-node" data-address="${nodeAddress}"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+
+    const editNodes = newRow.querySelectorAll('.edit-node');
+    editNodes.forEach((editNode) => {
+        editNode.addEventListener('click', () => {
+            const newValue = prompt('Enter new value:', editNode.textContent);
+            if (newValue !== null && newValue !== "") {
+                if (editNode.dataset.address) {
+                    editNode.dataset.address = newValue;
+                    editNode.querySelector('a').textContent = generateNewNodeAddressText(newValue);
+                } else {
+                    editNode.textContent = newValue;
+                }
+                updateNodeInStorage(nodeAddress, newValue);
+            }
+        });
+    });
+
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
         const confirmation = confirm("Please confirm this action!");
@@ -161,6 +178,17 @@ function addNodeToDatabase(nodeName, nodeAddress) {
     localStorage.setItem('nodes', JSON.stringify(nodes));
 }
 
+function updateNodeInStorage(oldNodeAddress, newNodeValue) {
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const updatedNodes = nodes.map((node) => {
+        if (node.nodeAddress === oldNodeAddress) {
+            return { ...node, nodeName: newNodeValue };
+        }
+        return node;
+    });
+    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
+}
+
 async function loadNodesData() {
     const storedNodes = JSON.parse(localStorage.getItem('nodes')) || [];
     const table = document.getElementById('myTable');
@@ -230,6 +258,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('node-name').value = '';
             document.getElementById('node-address').value = '';
             existingAddresses.add(nodeAddress);
+
+            // Adaugă această linie pentru a actualiza noile date în stocarea locală
+            updateNodeInStorage(nodeAddress, nodeName);
         }
     });
 });
@@ -300,3 +331,4 @@ document.addEventListener('DOMContentLoaded', () => {
             target.parentNode.classList.remove('highlight');
         }
     });
+});
