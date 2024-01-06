@@ -87,7 +87,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
                     newRow.classList.add('red-text');
                 }
             } else {
@@ -99,7 +99,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
                         newRow.classList.add('red-text');
                     }
                 } else {
@@ -110,7 +110,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                 newRow.classList.add('red-text');
             }
         }
@@ -185,7 +185,7 @@ async function loadNodesData() {
                     stopProgressAnimation(progressInterval);
                 }, 1000);
 
-                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
                     row.classList.add('red-text');
                 }
             }
