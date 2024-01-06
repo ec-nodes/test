@@ -3,7 +3,7 @@ const pendingAddresses = new Set();
 
 const PROGRESS_INTERVAL = 300;
 const MAX_RETRIES = 3;
-const RETRY_INTERVAL = 2500;
+const RETRY_INTERVAL = 1000; // Adjusted retry interval
 
 function startProgressAnimation(cell) {
     let progress = 1;
@@ -19,30 +19,6 @@ function stopProgressAnimation(progressInterval) {
     clearInterval(progressInterval);
 }
 
-async function retryFetchTransactions(node) {
-    let retryCount = 0;
-
-    while (retryCount < MAX_RETRIES) {
-        try {
-            const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
-            const json = await response.json();
-            const nodeTransactionsArray = json.result;
-
-            if (nodeTransactionsArray.length > 0) {
-                existingAddresses.add(node.nodeAddress);
-                return { ...node, lastTransactionTime: Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600) };
-            }
-        } catch (error) {
-            console.log(`Error fetching data for ${node.nodeAddress}: ${error}`);
-        } finally {
-            retryCount++;
-            await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
-        }
-    }
-
-    return null;
-}
-
 async function fetchTransactions(node) {
     try {
         if (pendingAddresses.has(node.nodeAddress)) {
@@ -51,13 +27,28 @@ async function fetchTransactions(node) {
 
         pendingAddresses.add(node.nodeAddress);
 
-        const response = await retryFetchTransactions(node);
+        let retryCount = 0;
 
-        if (response) {
-            pendingAddresses.delete(node.nodeAddress);
+        while (retryCount < MAX_RETRIES) {
+            try {
+                const response = await fetch(`https://blockexplorer.bloxberg.org/api?module=account&action=txlist&address=${node.nodeAddress}`);
+                const json = await response.json();
+                const nodeTransactionsArray = json.result;
+
+                if (nodeTransactionsArray.length > 0) {
+                    existingAddresses.add(node.nodeAddress);
+                    pendingAddresses.delete(node.nodeAddress);
+                    return { ...node, lastTransactionTime: Math.round((Date.now() / 1000 - nodeTransactionsArray[0].timeStamp) / 3600) };
+                }
+            } catch (error) {
+                console.log(`Error fetching data for ${node.nodeAddress}: ${error}`);
+            } finally {
+                retryCount++;
+                await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
+            }
         }
 
-        return response;
+        return null;
     } finally {
         pendingAddresses.delete(node.nodeAddress);
     }
@@ -96,7 +87,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
             if (retryResponse) {
                 cell.textContent = retryResponse.lastTransactionTime || 'Last Hour';
                 stopProgressAnimation(progressInterval);
-                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 24) {
+                if (typeof retryResponse.lastTransactionTime === 'number' && retryResponse.lastTransactionTime > 17) {
                     newRow.classList.add('red-text');
                 }
             } else {
@@ -108,18 +99,18 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                 if (secondRetryResponse) {
                     cell.textContent = secondRetryResponse.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 24) {
+                    if (typeof secondRetryResponse.lastTransactionTime === 'number' && secondRetryResponse.lastTransactionTime > 17) {
                         newRow.classList.add('red-text');
                     }
                 } else {
-                    cell.textContent = 'No Response';
+                    cell.textContent = 'Network Fail';
                     stopProgressAnimation(progressInterval);
                 }
             }
         } else {
             cell.textContent = response.lastTransactionTime || 'Last Hour';
             stopProgressAnimation(progressInterval);
-            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+            if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
                 newRow.classList.add('red-text');
             }
         }
@@ -192,14 +183,14 @@ async function loadNodesData() {
                 setTimeout(() => {
                     cell.textContent = response.lastTransactionTime || 'Last Hour';
                     stopProgressAnimation(progressInterval);
-                }, RETRY_INTERVAL);
+                }, 1000);
 
-                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 24) {
+                if (typeof response.lastTransactionTime === 'number' && response.lastTransactionTime > 17) {
                     row.classList.add('red-text');
                 }
             }
         } catch (error) {
-            console.log(`Error fetching data for ${nodeAddress}: ${error}`);
+            console.error(`Error fetching data for ${nodeAddress}: ${error}`);
         }
     }));
 }
