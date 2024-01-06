@@ -2,8 +2,8 @@ const existingAddresses = new Set();
 const pendingAddresses = new Set();
 
 const PROGRESS_INTERVAL = 300;
-const MAX_RETRIES = 3;
-const RETRY_INTERVAL = 1000; // Adjusted retry interval
+const MAX_RETRIES = 2;
+const RETRY_INTERVAL = 2000;
 
 function startProgressAnimation(cell) {
     let progress = 1;
