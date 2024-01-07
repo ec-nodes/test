@@ -1,9 +1,9 @@
 const existingAddresses = new Set();
 const pendingAddresses = new Set();
-
 const PROGRESS_INTERVAL = 300;
-const MAX_RETRIES = 2;
-const RETRY_INTERVAL = 2000;
+const MAX_RETRIES = 3;
+const RETRY_INTERVAL = 1000;
+let order = [];
 
 function startProgressAnimation(cell) {
     let progress = 1;
@@ -21,9 +21,7 @@ function stopProgressAnimation(progressInterval) {
 
 async function fetchTransactions(node) {
     try {
-        if (pendingAddresses.has(node.nodeAddress)) {
-            return null;
-        }
+        if (pendingAddresses.has(node.nodeAddress)) return null;
 
         pendingAddresses.add(node.nodeAddress);
 
@@ -62,10 +60,9 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
     const table = document.getElementById('myTable');
     const newRow = table.insertRow();
     const newNodeAddressText = generateNewNodeAddressText(nodeAddress);
-
     const transactionTimeText = typeof transactionTime === 'number' ? `${transactionTime} h` : transactionTime;
 
-    newRow.innerHTML = `<td>${nodeName}</td><td><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
+    newRow.innerHTML = `<td draggable="true" ondragstart="startDrag(event)">${nodeName}</td><td draggable="true"><a href="https://blockexplorer.bloxberg.org/address/${nodeAddress}">${newNodeAddressText}</a></td><td>${transactionTimeText}</td><td><img src="https://i.ibb.co/xHbVTPk/delete-3.webp" alt="Delete" class="delete-logo"></td>`;
 
     const deleteLogo = newRow.querySelector('.delete-logo');
     deleteLogo.addEventListener('click', () => {
@@ -74,6 +71,15 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
             table.deleteRow(newRow.rowIndex);
             deleteNodeFromStorage(nodeAddress);
         }
+    });
+
+    const contextMenuCell = newRow.cells[3];
+    contextMenuCell.innerHTML = `<div class="context-menu"></div>`;
+
+    const contextMenu = newRow.querySelector('.context-menu');
+    newRow.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        showContextMenu(event, nodeAddress, newRow);
     });
 
     const cell = newRow.cells[2];
@@ -103,7 +109,7 @@ function addNodeToTable(nodeName, nodeAddress, transactionTime) {
                         newRow.classList.add('red-text');
                     }
                 } else {
-                    cell.textContent = 'Network Fail';
+                    cell.textContent = 'No Response';
                     stopProgressAnimation(progressInterval);
                 }
             }
@@ -295,4 +301,149 @@ document.addEventListener('DOMContentLoaded', () => {
             target.parentNode.classList.remove('highlight');
         }
     });
+});
+
+function showContextMenu(event, nodeAddress, row) {
+    event.preventDefault();
+
+    const contextMenu = row.querySelector('.context-menu');
+    contextMenu.innerHTML = `
+        <div class="context-menu-option" data-option="edit">Edit</div>
+        <div class="context-menu-option" data-option="delete">Delete</div>
+    `;
+
+    const contextMenuOptions = row.querySelectorAll('.context-menu-option');
+    contextMenuOptions.forEach((option, index) => {
+        option.addEventListener('click', () => {
+            handleContextMenuOption(option.dataset.option, nodeAddress, row);
+        });
+    });
+
+    contextMenu.style.top = `${event.clientY}px`;
+    contextMenu.style.left = `${event.clientX}px`;
+
+    document.addEventListener('click', () => {
+        contextMenu.innerHTML = '';
+    });
+}
+
+function handleContextMenuOption(option, nodeAddress, row) {
+    switch (option) {
+        case 'delete':
+            deleteRow(row, nodeAddress);
+            break;
+        case 'edit':
+            editNode(row, nodeAddress);
+            break;
+        default:
+            break;
+    }
+}
+
+function editNode(row, nodeAddress) {
+    const oldNodeName = row.cells[0].textContent;
+    const nodeName = prompt("Enter the new node name:", oldNodeName);
+    if (nodeName !== null) {
+        row.cells[0].textContent = nodeName;
+        editNodeInMemory(nodeAddress, oldNodeName, nodeName);
+    }
+
+    const oldNodeAddress = nodeAddress;
+    const nodeAddressInput = prompt("Enter the new node address:", oldNodeAddress);
+    if (nodeAddressInput !== null) {
+        // Perform validation or additional checks if needed
+        row.cells[1].querySelector('a').href = `https://blockexplorer.bloxberg.org/address/${nodeAddressInput}`;
+        row.cells[1].querySelector('a').textContent = generateNewNodeAddressText(nodeAddressInput);
+        editNodeAddressInMemory(nodeAddress, nodeAddressInput);
+    }
+}
+
+function deleteRow(row, nodeAddress) {
+    const confirmation = confirm("Please confirm this action!");
+    if (confirmation) {
+        const table = document.getElementById('myTable');
+        table.deleteRow(row.rowIndex);
+        deleteNodeFromStorage(nodeAddress);
+    }
+}
+
+function editNodeName(row, nodeAddress) {
+    const oldNodeName = row.cells[0].textContent;
+    const nodeName = prompt("Enter the new node name:", oldNodeName);
+    if (nodeName !== null) {
+        row.cells[0].textContent = nodeName;
+        editNodeInMemory(nodeAddress, oldNodeName, nodeName);
+    }
+}
+
+function editNodeInMemory(oldNodeAddress, oldNodeName, newNodeAddress) {
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const updatedNodes = nodes.map(node => {
+        if (node.nodeAddress === oldNodeAddress && node.nodeName === oldNodeName) {
+            return { ...node, nodeName: newNodeAddress };
+        }
+        return node;
+    });
+    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
+}
+
+function editNodeAddress(row, nodeAddress) {
+    const oldNodeAddress = nodeAddress;
+    const nodeAddressInput = prompt("Enter the new node address:", oldNodeAddress);
+    if (nodeAddressInput !== null) {
+        // Perform validation or additional checks if needed
+        row.cells[1].querySelector('a').href = `https://blockexplorer.bloxberg.org/address/${nodeAddressInput}`;
+        row.cells[1].querySelector('a').textContent = generateNewNodeAddressText(nodeAddressInput);
+        editNodeAddressInMemory(nodeAddress, nodeAddressInput);
+    }
+}
+
+function editNodeAddressInMemory(oldNodeAddress, newNodeAddress) {
+    const nodes = JSON.parse(localStorage.getItem('nodes')) || [];
+    const updatedNodes = nodes.map(node => {
+        if (node.nodeAddress === oldNodeAddress) {
+            return { ...node, nodeAddress: newNodeAddress };
+        }
+        return node;
+    });
+    localStorage.setItem('nodes', JSON.stringify(updatedNodes));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const table = document.getElementById('myTable');
+
+    table.addEventListener('dragstart', (event) => {
+        const target = event.target;
+        if (target.tagName === 'TD') {
+            event.dataTransfer.setData('text/plain', target.parentNode.rowIndex);
+        }
+    });
+
+    table.addEventListener('dragover', (event) => {
+        event.preventDefault();
+    });
+
+    table.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const target = event.target;
+        const data = event.dataTransfer.getData('text/plain');
+        const rowIndex = parseInt(data, 10);
+
+        if (target.tagName === 'TD') {
+            const targetRow = target.parentNode;
+
+            table.rows[targetRow.rowIndex].parentNode.insertBefore(table.rows[rowIndex], targetRow);
+
+            order = Array.from(table.rows).map(row => row.querySelector('td:nth-child(2) a').textContent);
+            localStorage.setItem('rowOrder', JSON.stringify(order));
+        }
+    });
+});
+
+window.addEventListener('beforeunload', () => {
+    const table = document.getElementById('myTable');
+    const rows = Array.from(table.rows);
+    
+    order = rows.map(row => row.querySelector('td:nth-child(2) a').textContent);
+    localStorage.setItem('rowOrder', JSON.stringify(order));
 });
