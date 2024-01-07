@@ -1,34 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-<link rel="shortcut icon" type="image/webp" href="https://i.ibb.co/sbkcrzr/shortcut.webp">
+
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EC Nodes Monitor</title>
-  <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EC Nodes Monitor</title>
+    <link rel="shortcut icon" type="image/webp" href="https://i.ibb.co/sbkcrzr/shortcut.webp">
+    <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
+
 <body>
-  <div class="form-container">
-    <div>
-      <input type="text" id="node-name" placeholder="Node Name">
-      <input type="text" id="node-address" placeholder="Node Address">
-    </div>
-    <button type="button" id="add-node" class="orange-button">Add</button>
-  </div>
-  <table id="myTable">
-    <thead>
-      <tr>
-        <th style="width: 40%;">Name</th>
-        <th style="width: 39%;">Address</th>
-        <th style="width: 18%;">Last Call</th>
-        <th style="width: 3%;">Del</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
     <div class="form-container">
-<button id="download-backup" class="large-button">Backup</button>
-<button id="restore-backup" class="large-button">Restore</button>
-  </div>
-  <script src="script.js"></script>
+        <div>
+            <input type="text" id="node-name" placeholder="Node Name">
+            <input type="text" id="node-address" placeholder="Node Address">
+        </div>
+        <button type="button" id="add-node" class="orange-button">Add</button>
+    </div>
+    <table id="myTable">
+        <thead>
+            <tr>
+                <th style="width: 40%;">Name</th>
+                <th style="width: 45%;">Address</th>
+                <th style="width: 15%;">Last Call</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div class="form-container">
+        <button id="download-backup" class="large-button">Backup</button>
+        <button id="restore-backup" class="large-button">Restore</button>
+    </div>
+    <script src="script.js"></script>
 </body>
+
 </html>
