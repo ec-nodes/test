@@ -152,3 +152,16 @@ tr:not(:last-child) {
   background-color: #131831;
   color: #ffffff;
 }
+
+.context-menu-option {
+    padding: 4px;
+    cursor: pointer;
+    user-select: none;
+    background-color: #f89430;
+    border-radius: 4px;
+}
+
+.context-menu-option:hover {
+    background-color: #e97d1d;
+    border-radius: 4px;
+}
